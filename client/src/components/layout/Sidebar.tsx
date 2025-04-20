@@ -6,7 +6,6 @@ import {
   ClipboardList,
   Clock,
   FileText,
-  Home,
   LayoutDashboard,
   LogOut,
   Settings,
@@ -14,6 +13,8 @@ import {
   AlertTriangle,
   BookOpen,
   FileSpreadsheet,
+  Calendar,
+  Users,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -31,125 +32,104 @@ export function Sidebar({ isMobileSidebarOpen, closeMobileSidebar }: SidebarProp
   };
 
   const isActive = (path: string) => {
-    return location === path;
+    return location === path || (path !== '/dashboard' && location.startsWith(path));
   };
 
   const navItems = [
     {
-      title: 'Principal',
       items: [
-        { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard className="h-5 w-5 mr-3" /> },
-        { name: 'Exames', path: '/exams', icon: <FileSpreadsheet className="h-5 w-5 mr-3" /> },
-        { name: 'Boletim Médico', path: '/medical-bulletin', icon: <ClipboardList className="h-5 w-5 mr-3" /> },
-        { name: 'Passagem de Plantão', path: '/shift-change', icon: <Clock className="h-5 w-5 mr-3" /> },
+        { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={20} /> },
+        { name: 'Pacientes', path: '/patients', icon: <Users size={20} /> },
+        { name: 'Agenda', path: '/agenda', icon: <Calendar size={20} /> },
+        { name: 'Rounds', path: '/rounds', icon: <Users size={20} /> },
       ],
     },
     {
-      title: 'Gestão',
       items: [
-        { name: 'Relatórios', path: '/reports', icon: <FileText className="h-5 w-5 mr-3" /> },
-        { name: 'Protocolos', path: '/protocols', icon: <BookOpen className="h-5 w-5 mr-3" /> },
-        { name: 'Indicadores', path: '/indicators', icon: <BarChart4 className="h-5 w-5 mr-3" /> },
-        { name: 'Pendências', path: '/pending', icon: <AlertTriangle className="h-5 w-5 mr-3" /> },
-      ],
-    },
-    {
-      title: 'Configurações',
-      items: [
-        { name: 'Perfil', path: '/profile', icon: <User className="h-5 w-5 mr-3" /> },
-        { name: 'Configurações', path: '/settings', icon: <Settings className="h-5 w-5 mr-3" /> },
+        { name: 'Relatórios', path: '/reports', icon: <FileText size={20} /> },
+        { name: 'Perfil', path: '/profile', icon: <User size={20} /> },
+        { name: 'Configurações', path: '/settings', icon: <Settings size={20} /> },
       ],
     },
   ];
 
   return (
     <>
-      {/* Desktop sidebar */}
-      <aside className="w-64 h-full bg-text text-white flex-shrink-0 hidden md:block">
-        <SidebarContent navItems={navItems} isActive={isActive} onLogout={handleLogout} />
-      </aside>
+      <div className={cn(
+        "fixed inset-0 z-50 bg-background/80 backdrop-blur-sm md:hidden",
+        isMobileSidebarOpen ? "block" : "hidden"
+      )}
+      onClick={closeMobileSidebar} />
 
-      {/* Mobile sidebar */}
-      {isMobileSidebarOpen && (
-        <div className="fixed inset-0 flex z-40 md:hidden">
-          <div className="fixed inset-0 bg-gray-600 bg-opacity-75" onClick={closeMobileSidebar}></div>
-          <div className="relative flex-1 flex flex-col max-w-xs w-full bg-text text-white">
-            <div className="absolute top-0 right-0 -mr-12 pt-2">
+      <aside className={cn(
+        "fixed top-0 left-0 z-50 h-full w-72 border-r bg-card transition-transform md:translate-x-0 md:bg-background/60 md:backdrop-blur-sm",
+        isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
+      )}>
+        <div className="flex flex-col h-full">
+          <div className="p-4 flex flex-col">
+            <div className="flex items-center h-14">
+              <div>
+                <h1 className="text-xl font-bold text-primary">MONITORAUTI</h1>
+                <p className="text-xs text-muted-foreground">Sistema Avançado de Monitoramento</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-4 flex flex-col py-4 flex-1">
+            <div className="px-3 py-2">
+              <h2 className="mb-2 px-4 text-xs font-semibold tracking-tight text-muted-foreground uppercase">
+                Menu
+              </h2>
+              <div className="space-y-1">
+                {navItems[0].items.map((item) => (
+                  <Link 
+                    key={item.path}
+                    href={item.path}
+                    className={cn(
+                      "flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors",
+                      isActive(item.path) && "bg-accent text-accent-foreground"
+                    )}
+                  >
+                    {item.icon}
+                    {item.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div className="px-3 py-2">
+              <h2 className="mb-2 px-4 text-xs font-semibold tracking-tight text-muted-foreground uppercase">
+                Administração
+              </h2>
+              <div className="space-y-1">
+                {navItems[1].items.map((item) => (
+                  <Link 
+                    key={item.path}
+                    href={item.path}
+                    className={cn(
+                      "flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors",
+                      isActive(item.path) && "bg-accent text-accent-foreground"
+                    )}
+                  >
+                    {item.icon}
+                    {item.name}
+                  </Link>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-auto px-3 py-2">
               <button
-                className="ml-1 flex items-center justify-center h-10 w-10 rounded-full focus:outline-none focus:ring-2 focus:ring-inset focus:ring-white"
-                onClick={closeMobileSidebar}
+                onClick={handleLogout}
+                className="flex w-full items-center gap-3 rounded-md px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition-colors"
               >
-                <span className="sr-only">Close sidebar</span>
-                <svg className="h-6 w-6 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M6 18L18 6M6 6l12 12" />
-                </svg>
+                <LogOut size={20} />
+                Sair
               </button>
             </div>
-            <SidebarContent navItems={navItems} isActive={isActive} onLogout={handleLogout} />
           </div>
         </div>
-      )}
-    </>
-  );
-}
-
-interface SidebarContentProps {
-  navItems: { title: string; items: { name: string; path: string; icon: JSX.Element }[] }[];
-  isActive: (path: string) => boolean;
-  onLogout: () => void;
-}
-
-function SidebarContent({ navItems, isActive, onLogout }: SidebarContentProps) {
-  return (
-    <>
-      <div className="p-4 border-b border-gray-700">
-        <div className="flex items-center">
-          <div className="bg-gradient-to-r from-white to-primary bg-clip-text">
-            <h1 className="text-2xl font-bold text-transparent">MONITORA UTI</h1>
-          </div>
-        </div>
-      </div>
-
-      <nav className="mt-6">
-        {navItems.map((section, idx) => (
-          <div key={idx}>
-            <div className="px-4 py-2 text-gray-400 text-xs uppercase tracking-wider">
-              {section.title}
-            </div>
-
-            {section.items.map((item) => (
-              <Link
-                key={item.path}
-                href={item.path}
-                onClick={(e) => {
-                  if (isActive(item.path)) {
-                    e.preventDefault();
-                  }
-                }}
-                className={cn(
-                  "flex items-center px-6 py-3 text-gray-300 hover:bg-opacity-5 hover:bg-white transition-colors duration-200",
-                  isActive(item.path) && "bg-[rgba(74,144,226,0.15)] border-l-4 border-primary"
-                )}
-              >
-                {item.icon}
-                {item.name}
-              </Link>
-            ))}
-          </div>
-        ))}
-
-        <div className="px-4 py-2 mt-4 text-gray-400 text-xs uppercase tracking-wider">
-          Sessão
-        </div>
-
-        <button
-          onClick={onLogout}
-          className="w-full text-left flex items-center px-6 py-3 text-gray-300 hover:bg-opacity-5 hover:bg-white transition-colors duration-200"
-        >
-          <LogOut className="h-5 w-5 mr-3" />
-          Sair
-        </button>
-      </nav>
+      </aside>
     </>
   );
 }
