@@ -6,20 +6,20 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { BedStatus } from '@/types';
 import { useTheme } from 'next-themes';
 
-// Este é o novo componente BedCard, que substitui o anterior
+// Este é o novo componente BedCard, seguindo o design de referência
 function BedCard({ bed }: { bed: any }) {
   const getStatusClass = (status: string) => {
     switch (status) {
       case 'critical':
-        return 'bg-red-500/10 dark:bg-red-900/30 border-l-4 border-red-500';
+        return 'bg-card dark:bg-card border-t-4 border-red-500';
       case 'attention':
-        return 'bg-amber-500/10 dark:bg-amber-900/30 border-l-4 border-amber-500';
+        return 'bg-card dark:bg-card border-t-4 border-amber-500';
       case 'stable':
-        return 'bg-green-500/10 dark:bg-green-900/30 border-l-4 border-green-500';
+        return 'bg-card dark:bg-card border-t-4 border-green-500';
       case 'available':
-        return 'bg-blue-400/5 dark:bg-blue-900/10 border-l-4 border-blue-300 dark:border-blue-800';
+        return 'bg-card dark:bg-card border-t-4 border-blue-300 dark:border-blue-500';
       default:
-        return 'bg-card border-l-4 border-muted';
+        return 'bg-card dark:bg-card border-t-4 border-muted';
     }
   };
 
@@ -45,7 +45,7 @@ function BedCard({ bed }: { bed: any }) {
         <div className="p-4">
           <div className="flex justify-between items-start mb-2">
             <h3 className="font-semibold">Leito {bed.bedNumber}</h3>
-            <span className="text-sm text-muted-foreground">
+            <span className="text-xs text-muted-foreground">
               Ala {bed.wing} • {bed.floor}º andar
             </span>
           </div>
@@ -62,28 +62,28 @@ function BedCard({ bed }: { bed: any }) {
       <div className="p-4">
         <div className="flex justify-between items-start mb-2">
           <h3 className="font-semibold">Leito {bed.bedNumber}</h3>
-          <span className="text-sm text-muted-foreground">
+          <span className="text-xs text-muted-foreground">
             Ala {bed.wing} • {bed.floor}º andar
           </span>
         </div>
         
         <div className="pt-1">
           <h4 className="font-medium">{bed.patient.name}</h4>
-          <div className="flex items-center text-sm text-muted-foreground mt-1 space-x-1">
+          <div className="flex items-center text-xs text-muted-foreground mt-1 space-x-1">
             <span>{bed.patient.age} anos</span>
             <span>•</span>
             <span>{bed.patient.mainDiagnosis}</span>
           </div>
         </div>
         
-        <div className="flex justify-between items-center mt-4 text-sm">
+        <div className="flex justify-between items-center mt-4 text-xs">
           <div className="flex flex-col">
-            <span className="text-xs text-muted-foreground">Tempo de internação</span>
-            <span>{bed.patient.daysHospitalized || 0} dias</span>
+            <span className="text-muted-foreground">Tempo de internação</span>
+            <span className="font-medium">{bed.patient.daysHospitalized || 0} dias</span>
           </div>
           
           <div className="flex flex-col text-right">
-            <span className="text-xs text-muted-foreground">Gravidade</span>
+            <span className="text-muted-foreground">Gravidade</span>
             <span className="font-medium">
               {bed.status === 'critical' ? 'Alta' : 
                bed.status === 'attention' ? 'Moderada' : 

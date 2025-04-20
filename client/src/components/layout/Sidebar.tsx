@@ -62,7 +62,7 @@ export function Sidebar({ isMobileSidebarOpen, closeMobileSidebar }: SidebarProp
       onClick={closeMobileSidebar} />
 
       <aside className={cn(
-        "fixed top-0 left-0 z-50 h-full w-72 border-r bg-card transition-transform md:translate-x-0 md:bg-background/60 md:backdrop-blur-sm",
+        "fixed top-0 left-0 z-50 h-full w-72 border-r bg-[#1a2036] text-white transition-transform md:translate-x-0",
         isMobileSidebarOpen ? "translate-x-0" : "-translate-x-full"
       )}>
         <div className="flex flex-col h-full">
