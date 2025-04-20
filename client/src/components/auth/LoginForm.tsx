@@ -17,8 +17,8 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 
 const loginFormSchema = z.object({
-  username: z.string().min(3, { message: 'Username must be at least 3 characters' }),
-  password: z.string().min(6, { message: 'Password must be at least 6 characters' }),
+  username: z.string().min(3, { message: 'Usuário deve ter no mínimo 3 caracteres' }),
+  password: z.string().min(6, { message: 'Senha deve ter no mínimo 6 caracteres' }),
 });
 
 type LoginFormValues = z.infer<typeof loginFormSchema>;
@@ -44,9 +44,9 @@ export function LoginForm() {
       navigate('/dashboard');
     } catch (error) {
       console.error('Login error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to login. Please try again.';
+      const errorMessage = error instanceof Error ? error.message : 'Falha na autenticação. Por favor, tente novamente.';
       toast({
-        title: 'Authentication Failed',
+        title: 'Falha na Autenticação',
         description: errorMessage,
         variant: 'destructive',
       });
@@ -56,16 +56,12 @@ export function LoginForm() {
   };
 
   return (
-    <div className="w-full max-w-md">
-      <div className="text-center mb-8">
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent mb-2">
-          MONITORA UTI
-        </h1>
-        <p className="text-gray-600">Sistema Avançado de Monitoramento de UTI</p>
-      </div>
+    <div className="w-full">
+      <h2 className="text-2xl font-semibold mb-6">Bem-vindo de volta</h2>
+      <p className="text-muted-foreground mb-8">Entre com suas credenciais para acessar o sistema</p>
 
       <Form {...form}>
-        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-5">
           <FormField
             control={form.control}
             name="username"
@@ -73,7 +69,11 @@ export function LoginForm() {
               <FormItem>
                 <FormLabel>Usuário</FormLabel>
                 <FormControl>
-                  <Input placeholder="Seu nome de usuário" {...field} />
+                  <Input 
+                    placeholder="Digite seu nome de usuário" 
+                    {...field}
+                    className="h-11" 
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -85,25 +85,39 @@ export function LoginForm() {
             name="password"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Senha</FormLabel>
+                <div className="flex items-center justify-between">
+                  <FormLabel>Senha</FormLabel>
+                  <a href="#" className="text-xs text-primary hover:text-primary/80">
+                    Esqueceu sua senha?
+                  </a>
+                </div>
                 <FormControl>
-                  <Input type="password" placeholder="Sua senha" {...field} />
+                  <Input 
+                    type="password" 
+                    placeholder="Digite sua senha" 
+                    {...field}
+                    className="h-11" 
+                  />
                 </FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
 
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? 'Entrando...' : 'Entrar'}
+          <Button 
+            type="submit" 
+            className="w-full h-11 mt-2 font-medium" 
+            disabled={isLoading}
+          >
+            {isLoading ? 'Autenticando...' : 'Entrar no Sistema'}
           </Button>
         </form>
       </Form>
 
-      <div className="mt-6 text-center">
-        <a href="#" className="text-sm text-primary hover:text-primary/80">
-          Esqueceu sua senha?
-        </a>
+      <div className="mt-8 pt-6 border-t border-border text-center">
+        <p className="text-sm text-muted-foreground">
+          Precisa de ajuda? Entre em contato com o <span className="text-primary">Suporte Técnico</span>
+        </p>
       </div>
     </div>
   );
