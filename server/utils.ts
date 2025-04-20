@@ -29,8 +29,10 @@ export const determineBedStatus = (patient: Patient | null): string => {
 // Format a patient with bed detail for API response
 export const formatPatientWithBed = (
   patient: Patient, 
-  bed: Bed | null
+  bed: Bed | null | undefined
 ): Record<string, any> => {
+  // Ensure bed is null if undefined
+  const bedData = bed === undefined ? null : bed;
   const status = determineBedStatus(patient);
   const daysHospitalized = calculateDaysOfHospitalization(patient);
   
@@ -49,11 +51,11 @@ export const formatPatientWithBed = (
     status,
     secondaryDiagnoses: patient.secondaryDiagnoses,
     active: patient.active,
-    bed: bed ? {
-      id: bed.id,
-      bedNumber: bed.bedNumber,
-      wing: bed.wing,
-      floor: bed.floor,
+    bed: bedData ? {
+      id: bedData.id,
+      bedNumber: bedData.bedNumber,
+      wing: bedData.wing,
+      floor: bedData.floor,
       status: status
     } : null
   };
