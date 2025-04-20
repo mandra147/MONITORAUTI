@@ -215,8 +215,6 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Patient not found" });
       }
       
-      const bed = patient.bedId ? await storage.getBed(patient.bedId) : null;
-      
       // Get patient problems
       const problems = await storage.getPatientProblems(patientId);
       
@@ -227,6 +225,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!patient) {
         return res.status(404).json({ message: 'Patient not found' });
       }
+
+      // Get patient bed (already know patient exists at this point)
+      const bed = patient.bedId ? await storage.getBed(patient.bedId) : null;
 
       // Format patient data
       const formattedPatient = formatPatientWithBed(patient, bed);

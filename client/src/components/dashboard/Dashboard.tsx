@@ -19,9 +19,9 @@ export function Dashboard() {
   const bedsArray = Array.isArray(beds) ? beds : [];
 
   const filteredBeds = useMemo(() => {
-    if (!beds) return [];
+    if (!bedsArray || bedsArray.length === 0) return [];
     
-    return beds.filter((bed: any) => {
+    return bedsArray.filter((bed: any) => {
       // Filter by status (ignore if "all" is selected)
       if (statusFilter && statusFilter !== 'all' && bed.status !== statusFilter) {
         return false;
@@ -40,19 +40,19 @@ export function Dashboard() {
       
       return true;
     });
-  }, [beds, searchTerm, statusFilter]);
+  }, [bedsArray, searchTerm, statusFilter]);
 
   const statusCounts = useMemo(() => {
-    if (!beds) return { critical: 0, attention: 0, stable: 0, available: 0 };
+    if (!bedsArray || bedsArray.length === 0) return { critical: 0, attention: 0, stable: 0, available: 0 };
     
-    return beds.reduce(
+    return bedsArray.reduce(
       (acc: Record<BedStatus, number>, bed: any) => {
         acc[bed.status as BedStatus] = (acc[bed.status as BedStatus] || 0) + 1;
         return acc;
       },
       { critical: 0, attention: 0, stable: 0, available: 0 }
     );
-  }, [beds]);
+  }, [bedsArray]);
 
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
