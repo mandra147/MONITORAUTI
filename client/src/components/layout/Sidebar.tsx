@@ -122,23 +122,17 @@ function SidebarContent({ navItems, isActive, onLogout }: SidebarContentProps) {
                 key={item.path}
                 href={item.path}
                 onClick={(e) => {
-                  if (location !== item.path) {
-                    // Only navigate if not already on this page
-                    // Otherwise, let Wouter handle it
-                  } else {
+                  if (isActive(item.path)) {
                     e.preventDefault();
                   }
                 }}
+                className={cn(
+                  "flex items-center px-6 py-3 text-gray-300 hover:bg-opacity-5 hover:bg-white transition-colors duration-200",
+                  isActive(item.path) && "bg-[rgba(74,144,226,0.15)] border-l-4 border-primary"
+                )}
               >
-                <a
-                  className={cn(
-                    "flex items-center px-6 py-3 text-gray-300 hover:bg-opacity-5 hover:bg-white transition-colors duration-200",
-                    isActive(item.path) && "bg-[rgba(74,144,226,0.15)] border-l-4 border-primary"
-                  )}
-                >
-                  {item.icon}
-                  {item.name}
-                </a>
+                {item.icon}
+                {item.name}
               </Link>
             ))}
           </div>

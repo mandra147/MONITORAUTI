@@ -8,19 +8,22 @@ import { BedStatus } from '@/types';
 
 export function Dashboard() {
   const [searchTerm, setSearchTerm] = useState<string>('');
-  const [statusFilter, setStatusFilter] = useState<string>('');
+  const [statusFilter, setStatusFilter] = useState<string>('all');
   
   const { data: beds = [], isLoading, error } = useQuery({
     queryKey: ['/api/dashboard'],
     refetchInterval: 30000, // Refetch every 30 seconds
   });
+  
+  // Ensure beds is always an array, even if API returns an object or undefined
+  const bedsArray = Array.isArray(beds) ? beds : [];
 
   const filteredBeds = useMemo(() => {
     if (!beds) return [];
     
     return beds.filter((bed: any) => {
-      // Filter by status
-      if (statusFilter && bed.status !== statusFilter) {
+      // Filter by status (ignore if "all" is selected)
+      if (statusFilter && statusFilter !== 'all' && bed.status !== statusFilter) {
         return false;
       }
       
@@ -114,7 +117,7 @@ export function Dashboard() {
                 <SelectValue placeholder="Todos os status" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">Todos os status</SelectItem>
+                <SelectItem value="all">Todos os status</SelectItem>
                 <SelectItem value="critical">Crítico</SelectItem>
                 <SelectItem value="attention">Atenção</SelectItem>
                 <SelectItem value="stable">Estável</SelectItem>
