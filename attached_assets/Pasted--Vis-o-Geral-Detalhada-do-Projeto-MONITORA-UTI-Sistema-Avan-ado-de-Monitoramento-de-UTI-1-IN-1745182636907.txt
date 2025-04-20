@@ -1,0 +1,253 @@
+# Visão Geral Detalhada do Projeto MONITORA UTI - Sistema Avançado de Monitoramento de UTI
+
+## 1. INTRODUÇÃO E PROPÓSITO FUNDAMENTAL
+
+O MONITORA UTI é um sistema de auxílio à tomada de decisão médica em Unidades de Terapia Intensiva, projetado como uma ferramenta autônoma que **não substitui e não integra com prontuários médicos ou sistemas hospitalares**. Desenvolvido especificamente para agregar e apresentar dados críticos de pacientes em UTI de maneira organizada e hierárquica.
+
+### 1.1 Características Essenciais
+- Sistema complementar independente do prontuário médico
+- Interface otimizada para tomada de decisão rápida
+- Atualização em tempo real via WebSocket e polling
+- Conformidade total com LGPD e HIPAA
+- Acesso exclusivo para profissionais autorizados
+
+## 2. FLUXO DE NAVEGAÇÃO DETALHADO
+
+### 2.1 Fluxo Principal de Navegação
+
+```
+Login ──► Dashboard ──► Seleção de Paciente ──► Página Individual do Paciente ──► Sistemas de Avaliação
+   │
+   └─► Painel Administrativo (apenas para usuários admin)
+```
+
+### 2.2 Login (Rota: /login)
+- **Propósito**: Autenticação segura com credenciais institucionais
+- **Elementos**: 
+  - Campos de email/senha com validação em tempo real
+  - Suporte a MFA opcional
+  - Recuperação de senha via email
+- **Após login**: Redirecionamento para Dashboard principal
+- **Segurança**: JWT com refresh token, proteção contra brute-force
+
+### 2.3 Dashboard - Centro de Comando (Rota: /dashboard)
+- **Acesso**: Primeira página após autenticação bem-sucedida
+- **Layout**: Grid responsivo (3×4 no desktop) com 10 leitos monitorados
+- **Interatividade**:
+  - Click em card de leito → Página Individual do Paciente
+  - Filtros por status, tempo de internação e diagnóstico
+  - Pesquisa por nome ou número do leito
+- **Atualização**: Refresh automático a cada 30 segundos
+- **Estados visuais dos leitos**:
+  - Crítico: Background #9A3548
+  - Atenção: Background #C1954A
+  - Estável: Background #357D6F
+  - Vago: Background #545B6B
+
+### 2.4 Página Individual do Paciente (Rota: /paciente/{id})
+- **Acesso**: Click em card de leito no Dashboard
+- **Navegação interna**:
+  - Cards informativos → Clicáveis para expansão/edição
+  - Seção de exames → "Mais Detalhes" leva a /paciente/{id}/exames
+  - Grid de sistemas → Click em sistema leva a /paciente/{id}/sistemas?sistema={nome}
+- **Retorno**: Botão "Voltar ao Dashboard" (sempre visível)
+- **Breadcrumb**: Dashboard > Paciente > [Sistema quando aplicável]
+
+### 2.5 Avaliação por Sistemas (Rota: /paciente/{id}/sistemas)
+- **Acesso**: Click em card do grid de sistemas da página do paciente
+- **Navegação por sistemas**:
+  1. Barra superior com 8 sistemas + Plano Terapêutico
+  2. Menu lateral com sub-abas específicas por sistema
+  3. Botões "Próximo" e "Anterior" para navegação sequencial
+  4. Botão "Concluir" na última sub-aba salva todas as alterações
+- **Fluxo de sub-abas**:
+  - Neurológico: 6 sub-abas (Sedação → Consciência → Pupilas → Dor → Eventos → Resumo)
+  - Cardiovascular: 5 sub-abas (Drogas → Hemodinâmica → Ultrassom → Função → Resumo)
+  - Respiratório: 5 sub-abas (Ventilação → TOT → Secreção → Clínica → Resumo)
+  - Renal: 5 sub-abas (Balanço → Função → Volemia → Eletrólitos → Resumo)
+  - Gastrointestinal: 4 sub-abas (Nutrição → Glicemia → Ritmo → Resumo)
+  - Infeccioso: 6 sub-abas (Curso → Antibióticos → Transmissão → Rastreio → Resposta → Resumo)
+  - Profilaxias: 2 sub-abas (Riscos → Resumo)
+- **Salvamento**: Temporário durante navegação, definitivo no "Concluir"
+
+### 2.6 Painel Administrativo (Rota: /admin)
+- **Acesso**: Exclusivo para administradores via menu lateral
+- **Navegação principal**:
+  - Menu lateral fixo com 15 módulos
+  - Breadcrumb para localização
+  - Dashboard administrativo como página inicial
+- **Fluxos específicos**:
+  - **Admissão de Paciente**: Wizard de 5 etapas (Leito → Demográficos → Diagnóstico → Avaliação → Confirmação)
+  - **Gestão de Usuários**: Lista → Detalhes → Edição/Criação
+  - **Configuração de Medicamentos**: Lista → Formulário → Teste de Fórmula → Salvamento
+  - **Auditoria**: Filtros → Resultados → Exportação
+
+### 2.7 Menu Lateral Global
+- **Presente em todas as páginas**
+- **Itens sempre visíveis**: Dashboard, Exames, Boletim Médico, Passagem de Plantão, Relatórios, Protocolos, Indicadores, Pendências, Perfil, Configurações, Sair
+- **Comportamento**: 
+  - Fixo em desktop
+  - Colapsável em tablet
+  - Drawer em mobile
+- **Estados visuais**:
+  - Item ativo: Background rgba(74,144,226,0.15)
+  - Hover: Background rgba(255,255,255,0.05)
+
+### 2.8 Fluxos de Erro e Recuperação
+- **Sessão expirada**: Salvamento do estado em sessionStorage → Redirecionamento para login → Restauração após reautenticação
+- **Falha de conexão**: Banner de alerta não intrusivo → Tentativas de reconexão automática → Atualização após reconexão
+- **Permissão negada**: Mensagem explicativa → Redirecionamento para área permitida → Log de tentativa
+
+### 2.9 Deep Linking
+- **Suporte a URLs diretas**: Qualquer página pode ser acessada diretamente se autenticado
+- **Persistência de filtros**: Parâmetros de URL mantêm estado de filtros e pesquisas
+- **Compartilhamento**: URLs podem ser compartilhadas entre usuários com permissão
+
+
+## 3. COMPONENTES PRINCIPAIS E COMPORTAMENTOS
+
+### 3.1 Dashboard - Visão Geral dos Leitos
+
+#### 3.1.1 Cabeçalho Principal
+- Logo "MONITORA UTI" com gradiente branco-azul
+- Relógio digital (HH:MM:SS) com sincronização de servidor
+- Controles de usuário com avatar, nome e perfil
+- Notificações com badge contador
+
+#### 3.1.2 Grid de Leitos
+- **Layout**: 3 linhas × 4 colunas (10 leitos ativos + 2 reservados)
+- **Card de Leito Ocupado**:
+  - Cabeçalho: "Leito XXX" + "Ala X • Xº andar"
+  - Badge de status no canto superior direito
+  - Dados do paciente: Nome, idade, diagnóstico
+  - Métricas: Tempo de internação, gravidade
+  - Hover: Elevação com sombra, cursor pointer
+  - Click: Navega para página individual
+- **Card de Leito Vago**:
+  - Texto central: "Leito Disponível"
+  - Tempo de disponibilidade
+  - Botão "Admitir Paciente" (condicional à permissão)
+
+#### 3.1.3 Controles de Filtro
+- Barra de pesquisa com ícone (debounce 300ms)
+- Dropdowns: Status do leito, Tempo de internação, Diagnóstico
+- Multi-select com chips visuais
+
+### 3.2 Página Individual do Paciente
+
+#### 3.2.1 Barra de Informações do Paciente
+- **Identificação**: Nome completo, idade, sexo, prontuário
+- **Badges institucionais**: 
+  - "D.I.: [data]" (azul escuro #1A365D)
+  - "Leito: UTI-[número]" (roxo #553C9A)
+- **Controles**: "Voltar ao Dashboard", "Editar Dados" (condicional)
+
+#### 3.2.2 Cards Informativos (Flexbox com wrap)
+1. **Diagnóstico de Admissão** (#192841)
+   - CID-10, diagnósticos secundários, data
+   - Ações: Editar, Histórico
+2. **Diagnósticos Progressos** (#1C4441)
+   - Lista com bullets de evolução
+3. **Problemas Atuais** (#3C1F2D)
+   - Lista com ícones de alerta
+   - Border-left 4px vermelho
+4. **Tempo de Internação** (#192841)
+   - Contador de dias com visual grande
+   - Data provável de alta com badge
+5. **Pendências** (#3C1F2D)
+   - Lista com prazo, responsável e status
+   - Cores por urgência
+
+#### 3.2.3 Exames Laboratoriais
+- Tabela resumida: 5 dias × 15 parâmetros
+- Células com validação visual (normal/alterado)
+- Ações: "Mais Detalhes", "Tendências", "Importar", "Exportar"
+
+#### 3.2.4 Grid de Sistemas (4×2 + 1)
+- Cards de 80px altura com ícone e label
+- Hover: Elevação e transformação
+- Estados: Normal, Avaliado (check verde), Alerta (badge)
+
+### 3.3 Avaliação por Sistemas
+
+#### 3.3.1 Navegação Superior
+- 8 botões de sistema + Plano Terapêutico
+- Estados: Normal, Hover, Ativo, Desabilitado
+- Transição entre sistemas salva temporariamente
+
+#### 3.3.2 Menu Lateral de Sub-abas
+- Width: 280px, sticky
+- Indicadores: Check verde para completo
+- Border-left 4px azul para aba ativa
+
+#### 3.3.3 Formulários Dinâmicos
+- **Campos condicionais**: Baseados em escolhas anteriores
+- **Cálculos automáticos**: Doses, scores, validações
+- **Indicadores históricos**: Ícone ⏱️ com tooltip do último valor
+- **Mudanças**: △ verde (melhora) ou ▽ vermelho (piora)
+
+## 4. BANCO DE DADOS POSTGRESQL (SUPABASE) JA CRIADOS PELO USUARIO
+
+### 4.1 Estrutura de 73 Tabelas em 4 Níveis
+1. **Tabelas Centrais (13)**: `pacientes`, `avaliacoes_gerais`, `medicamentos`
+2. **Tabelas de Integração (8)**: `problemas`, `dispositivos_invasivos`, `pendencias`
+3. **Tabelas de Sistemas (44)**: Uma para cada sub-sistema clínico
+4. **Tabelas de Suporte (10)**: `usuarios`, `permissoes`, `log_alteracoes`
+
+### 4.2 Funções Críticas
+- `calcular_dose_vasoativo()`: Cálculo com exceção para Vasopressina
+- `calcular_dose_sedacao_analgesia()`: Baseado em peso do paciente
+- `atualizar_timestamp()`: Trigger em todas as tabelas principais
+- `registrar_log_alteracoes()`: Auditoria completa
+
+### 4.3 Row Level Security
+- Médicos: Acesso total a todos os pacientes
+- Enfermeiros: Visualização total, edição restrita aos seus leitos
+- Administradores: Controle completo do sistema
+
+## 5. FUNCIONALIDADES ESPECÍFICAS
+
+### 5.1 Cálculos Automáticos
+- **Medicamentos**: Dose atual com alerta de máximo
+- **Escala Glasgow**: Soma automática com interpretação
+- **Nutrição**: TMB por múltiplos métodos
+- **Clearance de Creatinina**: Cockcroft-Gault
+
+### 5.2 Integrações Especiais
+- **Importação de Exames**: Edge function para PDF/CSV
+- **Exportação**: Relatórios em PDF com formatação profissional
+- **Notificações**: Sistema de alerta para pendências e prazos
+
+### 5.3 Performance e Otimização
+- Lazy loading para componentes pesados
+- Virtual scrolling para tabelas grandes
+- Debounce em pesquisas e cálculos
+- Cache estratégico com invalidação inteligente
+
+## 6. SEGURANÇA E CONFORMIDADE
+
+### 6.1 Conformidade Regulatória
+- LGPD: Criptografia de dados, consentimento documentado
+- HIPAA: Logs de acesso, controle granular de permissões
+- Audit trail completo para todas as operações
+
+### 6.2 Autenticação e Autorização
+- Supabase Auth com JWT e refresh tokens
+- MFA opcional para administradores
+- RLS obrigatório em todas as tabelas
+- Session management com timeout configurável
+
+## 7. MONITORAMENTO E MANUTENÇÃO
+
+### 7.1 Métricas Críticas
+- Performance: Carregamento < 2s, interatividade < 3.5s
+- Disponibilidade: 99.9% uptime
+- Erros: < 0.1% das requisições
+- Uso de recursos: < 70% em operação normal
+
+### 7.2 Backups e Recuperação
+- Incrementais diários, completos semanais
+- Retenção de 30 dias
+- Testes de restauração mensais
+
+O sistema MONITORA UTI representa uma solução completa e robusta para monitoramento de UTI, com foco na usabilidade médica e segurança de dados, mantendo-se como uma ferramenta autônoma que complementa, mas não substitui, os sistemas hospitalares existentes.
