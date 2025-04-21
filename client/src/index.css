@@ -118,4 +118,17 @@
     from { opacity: 0; }
     to { opacity: 1; }
   }
+  
+  /* Classes de interação */
+  .hover-lift {
+    @apply transition-all duration-200 hover:-translate-y-2 hover:shadow-[0_8px_16px_rgba(0,0,0,0.4)];
+  }
+  
+  .hover-glow {
+    @apply transition-all duration-150 hover:brightness-110 hover:scale-[1.02];
+  }
+  
+  .hover-menu {
+    @apply transition-all duration-150 hover:bg-[rgba(255,255,255,0.05)] hover:text-white;
+  }
 }

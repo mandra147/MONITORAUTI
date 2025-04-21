@@ -64,7 +64,8 @@ export function BedCard({ bed }: BedCardProps) {
   return (
     <div 
       className={cn(
-        "bg-white rounded-lg shadow-md overflow-hidden border-t-4 cursor-pointer transform transition-all duration-200 hover:-translate-y-1 hover:shadow-lg",
+        "bg-white rounded-lg shadow-md overflow-hidden border-t-4 cursor-pointer transform transition-all duration-200 hover:-translate-y-2 hover:shadow-lg",
+        "transition-all duration-200 hover:shadow-[0_8px_16px_rgba(0,0,0,0.4)]",
         getBorderColor()
       )}
       onClick={handleClick}

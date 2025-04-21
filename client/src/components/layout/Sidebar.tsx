@@ -86,7 +86,7 @@ export function Sidebar({ isMobileSidebarOpen, closeMobileSidebar }: SidebarProp
                     key={item.path}
                     href={item.path}
                     className={cn(
-                      "flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors",
+                      "flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium hover:bg-[rgba(255,255,255,0.05)] hover:text-white transition-all duration-150",
                       isActive(item.path) && "bg-accent text-accent-foreground"
                     )}
                   >
@@ -107,7 +107,7 @@ export function Sidebar({ isMobileSidebarOpen, closeMobileSidebar }: SidebarProp
                     key={item.path}
                     href={item.path}
                     className={cn(
-                      "flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium hover:bg-accent hover:text-accent-foreground transition-colors",
+                      "flex items-center gap-3 rounded-md px-4 py-2 text-sm font-medium hover:bg-[rgba(255,255,255,0.05)] hover:text-white transition-all duration-150",
                       isActive(item.path) && "bg-accent text-accent-foreground"
                     )}
                   >
