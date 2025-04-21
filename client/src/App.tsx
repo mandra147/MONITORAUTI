@@ -5,7 +5,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "next-themes";
 import { AuthProvider } from "@/context/AuthProvider";
-import LoginPage from "@/pages/login";
+import { ProtectedRoute } from "@/lib/protected-route";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
 import DashboardPage from "@/pages/dashboard";
@@ -17,9 +17,14 @@ function Router() {
     <Switch>
       <Route path="/" component={HomePage} />
       <Route path="/auth" component={AuthPage} />
-      <Route path="/login" component={AuthPage} />
-      <Route path="/dashboard" component={DashboardPage} />
-      <Route path="/patient/:id" component={PatientPage} />
+      <ProtectedRoute path="/dashboard" component={DashboardPage} />
+      <ProtectedRoute path="/patients" component={DashboardPage} />
+      <ProtectedRoute path="/patients/:id" component={PatientPage} />
+      <ProtectedRoute path="/profile" component={NotFound} />
+      <ProtectedRoute path="/settings" component={NotFound} />
+      <ProtectedRoute path="/reports" component={NotFound} />
+      <ProtectedRoute path="/agenda" component={NotFound} />
+      <ProtectedRoute path="/rounds" component={NotFound} />
       <Route component={NotFound} />
     </Switch>
   );
