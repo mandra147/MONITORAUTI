@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { useLocation } from 'wouter';
 import { Bed } from '@/types';
 import { cn } from '@/lib/utils';
-import { Activity, Heart, Stethoscope, Wind, Brain, Plus, User, Calendar } from 'lucide-react';
+import { Activity, Heart, Stethoscope, Lungs, Brain, Plus, User, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface BedCardProps {
@@ -49,7 +49,7 @@ export function BedCard({ bed }: BedCardProps) {
     const diagnosis = bed.patient.mainDiagnosis.toLowerCase();
 
     if (diagnosis.includes('pneumonia') || diagnosis.includes('pulm')) {
-      return <Wind className="h-5 w-5 text-blue-400" />;
+      return <Lungs className="h-5 w-5 text-blue-400" />;
     } else if (diagnosis.includes('card') || diagnosis.includes('coração')) {
       return <Heart className="h-5 w-5 text-red-500" />;
     } else if (diagnosis.includes('avc') || diagnosis.includes('cerebr')) {
