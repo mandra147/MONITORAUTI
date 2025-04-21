@@ -1,10 +1,9 @@
-
 import { useCallback } from 'react';
 import { useLocation } from 'wouter';
 import { Bed } from '@/types';
 import { cn } from '@/lib/utils';
 import { Activity, Heart, Stethoscope, Brain, Plus, User, Calendar } from 'lucide-react';
-import { FaLungs } from 'react-icons/fa';
+import { FaLungs } from 'react-icons/fa6';
 import { Button } from '@/components/ui/button';
 
 interface BedCardProps {
@@ -97,7 +96,7 @@ export function BedCard({ bed }: BedCardProps) {
     >
       {/* Status indicator */}
       <div className={`absolute top-3 right-3 w-3 h-3 rounded-full ${getStatusColor()}`}></div>
-      
+
       <div className="p-5 flex flex-col h-full">
         <div className="mb-3">
           <h3 className="font-bold text-lg">Leito {bed.bedNumber}</h3>
@@ -132,7 +131,7 @@ export function BedCard({ bed }: BedCardProps) {
                     </div>
                   </div>
                 </div>
-                
+
                 {/* Diagnosis with icon - prominently displayed */}
                 <div className="mb-4 p-3 bg-card/80 rounded-lg border border-border/50 flex items-center gap-3">
                   <div className="p-2 rounded-full bg-primary/10">
