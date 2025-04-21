@@ -1,0 +1,1279 @@
+-- Script de criação de todas as tabelas do banco de dados MonitoraUTI
+-- Baseado na documentação técnica completa
+-- Data: 21/04/2025
+
+-- Configuração inicial
+SET client_encoding = 'UTF8';
+
+-- ===============================================
+-- 2.1 TABELAS CENTRAIS (13 tabelas)
+-- ===============================================
+
+-- 2.1.1 Tabela: pacientes
+CREATE TABLE IF NOT EXISTS public.pacientes (
+    id_paciente SERIAL PRIMARY KEY,
+    nome VARCHAR(255) NOT NULL,
+    data_nascimento DATE,
+    idade_paciente INTEGER,
+    peso_paciente NUMERIC,
+    altura_paciente_cm INTEGER,
+    sexo_paciente VARCHAR(20) CHECK (sexo_paciente IN ('masculino', 'feminino')),
+    data_admissao TIMESTAMP WITH TIME ZONE NOT NULL,
+    status VARCHAR(20) CHECK (status IN ('ativo', 'alta', 'transferido')),
+    ventilacao_mecanica BOOLEAN DEFAULT FALSE,
+    comunicativo BOOLEAN DEFAULT TRUE,
+    foto BYTEA,
+    numero_prontuario VARCHAR(50),
+    observacoes TEXT
+);
+
+COMMENT ON TABLE public.pacientes IS 'Tabela que armazena os dados dos pacientes da UTI';
+
+-- 2.1.2 Tabela: avaliacoes_gerais
+CREATE TABLE IF NOT EXISTS public.avaliacoes_gerais (
+    id_avaliacao SERIAL PRIMARY KEY,
+    id_paciente INTEGER NOT NULL REFERENCES public.pacientes(id_paciente),
+    data_avaliacao TIMESTAMP WITH TIME ZONE NOT NULL,
+    tipo_avaliacao VARCHAR(50),
+    responsavel VARCHAR(100),
+    status VARCHAR(20) CHECK (status IN ('em_andamento', 'concluida')),
+    observacoes TEXT,
+    data_atualizacao TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+COMMENT ON TABLE public.avaliacoes_gerais IS 'Tabela central que unifica todas as avaliações realizadas por diferentes sistemas';
+
+-- 2.1.3 Tabela: medicamentos
+CREATE TABLE IF NOT EXISTS public.medicamentos (
+  id_medicamento SERIAL PRIMARY KEY,
+  nome VARCHAR(255) NOT NULL,
+  tipo VARCHAR(50) NOT NULL, -- 'vasoativo', 'sedativo', 'analgesico', etc.
+  concentracao DECIMAL(10,3) NOT NULL,
+  unidade_concentracao VARCHAR(20) NOT NULL,
+  dose_maxima DECIMAL(10,3) NOT NULL,
+  unidade_dose_maxima VARCHAR(50) NOT NULL,
+  concentracao_padrao DECIMAL(10,3) NOT NULL,
+  formula_calculo TEXT,
+  data_cadastro TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+  data_atualizacao TIMESTAMP WITH TIME ZONE,
+  ativo BOOLEAN DEFAULT true,
+  
+  CONSTRAINT medicamentos_nome_tipo_unique UNIQUE (nome, tipo)
+);
+
+-- 2.1.4 Tabela: leitos
+CREATE TABLE IF NOT EXISTS public.leitos (
+    id_leito SERIAL PRIMARY KEY,
+    numero_leito VARCHAR(20) NOT NULL,
+    id_paciente INTEGER REFERENCES public.pacientes(id_paciente),
+    status VARCHAR(20) CHECK (status IN ('ocupado', 'livre', 'manutencao', 'reservado')),
+    id_responsavel UUID,
+    data_ultima_ocupacao TIMESTAMP WITH TIME ZONE,
+    observacoes TEXT
+);
+
+-- 2.1.5 Tabela: diagnosticos
+CREATE TABLE IF NOT EXISTS public.diagnosticos (
+    id_diagnostico SERIAL PRIMARY KEY,
+    id_paciente INTEGER NOT NULL REFERENCES public.pacientes(id_paciente),
+    diagnostico_principal TEXT NOT NULL,
+    cid10 VARCHAR(20),
+    diagnosticos_secundarios TEXT,
+    comorbidades TEXT,
+    data_registro TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    registrado_por VARCHAR(100),
+    data_atualizacao TIMESTAMP WITH TIME ZONE
+);
+
+-- 2.1.6 Tabela: pendencias
+CREATE TABLE IF NOT EXISTS public.pendencias (
+    id_pendencia SERIAL PRIMARY KEY,
+    id_paciente INTEGER NOT NULL REFERENCES public.pacientes(id_paciente),
+    descricao TEXT NOT NULL,
+    tipo VARCHAR(50),
+    prazo TIMESTAMP WITH TIME ZONE,
+    responsavel VARCHAR(100),
+    status VARCHAR(20) CHECK (status IN ('pendente', 'em_andamento', 'concluida', 'cancelada')),
+    prioridade VARCHAR(20) CHECK (prioridade IN ('baixa', 'media', 'alta', 'urgente')),
+    data_criacao TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    data_conclusao TIMESTAMP WITH TIME ZONE
+);
+
+-- 2.1.7 Tabela: exames_paciente
+CREATE TABLE IF NOT EXISTS public.exames_paciente (
+    id_exame SERIAL PRIMARY KEY,
+    id_paciente INTEGER NOT NULL REFERENCES public.pacientes(id_paciente),
+    data_exame TIMESTAMP WITH TIME ZONE NOT NULL,
+    tipo_exame VARCHAR(50),
+    status VARCHAR(20) CHECK (status IN ('solicitado', 'coletado', 'em_analise', 'importado', 'concluido')),
+    importado_por UUID,
+    data_importacao TIMESTAMP WITH TIME ZONE,
+    observacoes TEXT
+);
+
+-- 2.1.8 Tabela: resultados_exames
+CREATE TABLE IF NOT EXISTS public.resultados_exames (
+    id_resultado SERIAL PRIMARY KEY,
+    id_exame INTEGER NOT NULL REFERENCES public.exames_paciente(id_exame),
+    nome_exame VARCHAR(100) NOT NULL,
+    sigla_exame VARCHAR(20),
+    resultado VARCHAR(100),
+    unidade VARCHAR(20),
+    valor_referencia_min VARCHAR(20),
+    valor_referencia_max VARCHAR(20),
+    status VARCHAR(20) CHECK (status IN ('normal', 'alterado_leve', 'alterado_grave', 'nao_avaliado')),
+    observacoes TEXT
+);
+
+-- 2.1.9 Tabela: evolucoes
+CREATE TABLE IF NOT EXISTS public.evolucoes (
+    id_evolucao SERIAL PRIMARY KEY,
+    id_paciente INTEGER NOT NULL REFERENCES public.pacientes(id_paciente),
+    data_evolucao TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    tipo_evolucao VARCHAR(50) CHECK (tipo_evolucao IN ('medica', 'enfermagem', 'fisioterapia', 'nutricao', 'psicologia', 'fonoaudiologia', 'outro')),
+    conteudo TEXT NOT NULL,
+    autor VARCHAR(100) NOT NULL,
+    id_autor UUID
+);
+
+-- 2.1.10 Tabela: prescricoes
+CREATE TABLE IF NOT EXISTS public.prescricoes (
+    id_prescricao SERIAL PRIMARY KEY,
+    id_paciente INTEGER NOT NULL REFERENCES public.pacientes(id_paciente),
+    data_prescricao TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    data_validade TIMESTAMP WITH TIME ZONE,
+    tipo_prescricao VARCHAR(50) CHECK (tipo_prescricao IN ('medicacao', 'cuidados', 'dieta', 'controles', 'outro')),
+    medico_responsavel VARCHAR(100) NOT NULL,
+    id_medico UUID,
+    status VARCHAR(20) CHECK (status IN ('ativa', 'suspensa', 'concluida')),
+    observacoes TEXT
+);
+
+-- 2.1.11 Tabela: itens_prescricao
+CREATE TABLE IF NOT EXISTS public.itens_prescricao (
+    id_item SERIAL PRIMARY KEY,
+    id_prescricao INTEGER NOT NULL REFERENCES public.prescricoes(id_prescricao),
+    id_medicamento INTEGER REFERENCES public.medicamentos(id_medicamento),
+    descricao TEXT NOT NULL,
+    posologia VARCHAR(255),
+    via_administracao VARCHAR(50),
+    frequencia VARCHAR(50),
+    horarios TEXT,
+    status VARCHAR(20) CHECK (status IN ('ativo', 'suspenso', 'cancelado')),
+    observacoes TEXT
+);
+
+-- 2.1.12 Tabela: mapeamento_sistemas_dashboard
+CREATE TABLE IF NOT EXISTS public.mapeamento_sistemas_dashboard (
+    id_mapeamento SERIAL PRIMARY KEY,
+    id_paciente INTEGER NOT NULL REFERENCES public.pacientes(id_paciente),
+    data_atualizacao TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    status_neurologico VARCHAR(20) CHECK (status_neurologico IN ('normal', 'alterado', 'grave', 'nao_avaliado')),
+    status_cardiovascular VARCHAR(20) CHECK (status_cardiovascular IN ('normal', 'alterado', 'grave', 'nao_avaliado')),
+    status_respiratorio VARCHAR(20) CHECK (status_respiratorio IN ('normal', 'alterado', 'grave', 'nao_avaliado')),
+    status_renal VARCHAR(20) CHECK (status_renal IN ('normal', 'alterado', 'grave', 'nao_avaliado')),
+    status_gastrointestinal VARCHAR(20) CHECK (status_gastrointestinal IN ('normal', 'alterado', 'grave', 'nao_avaliado')),
+    status_infeccioso VARCHAR(20) CHECK (status_infeccioso IN ('normal', 'alterado', 'grave', 'nao_avaliado')),
+    status_riscos VARCHAR(20) CHECK (status_riscos IN ('normal', 'alterado', 'grave', 'nao_avaliado'))
+);
+
+-- 2.1.13 Tabela: eventos_paciente
+CREATE TABLE IF NOT EXISTS public.eventos_paciente (
+    id_evento SERIAL PRIMARY KEY,
+    id_paciente INTEGER NOT NULL REFERENCES public.pacientes(id_paciente),
+    data_evento TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    tipo_evento VARCHAR(50),
+    descricao TEXT NOT NULL,
+    gravidade VARCHAR(20) CHECK (gravidade IN ('informacao', 'alerta', 'grave', 'critico')),
+    responsavel VARCHAR(100),
+    id_responsavel UUID,
+    observacoes TEXT
+);
+
+-- ===============================================
+-- 2.2 TABELAS DE INTEGRAÇÃO (8 tabelas)
+-- ===============================================
+
+-- 2.2.1 Tabela: problemas
+CREATE TABLE IF NOT EXISTS public.problemas (
+    id_problema SERIAL PRIMARY KEY,
+    id_avaliacao INTEGER NOT NULL REFERENCES public.avaliacoes_gerais(id_avaliacao),
+    tipo_sistema VARCHAR(30) CHECK (tipo_sistema IN ('neurologico', 'cardiovascular', 'respiratorio', 'renal', 'gastrointestinal', 'infeccioso', 'riscos')),
+    problema TEXT NOT NULL,
+    plano_terapeutico TEXT,
+    conduta TEXT,
+    prazo VARCHAR(50),
+    origem VARCHAR(20) CHECK (origem IN ('automatico', 'manual')),
+    prioridade VARCHAR(20) CHECK (prioridade IN ('baixa', 'media', 'alta')),
+    status VARCHAR(20) CHECK (status IN ('ativo', 'em_resolucao', 'resolvido')),
+    data_identificacao TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    data_resolucao TIMESTAMP WITH TIME ZONE
+);
+
+-- 2.2.2 Tabela: dispositivos_invasivos
+CREATE TABLE IF NOT EXISTS public.dispositivos_invasivos (
+    id_dispositivo SERIAL PRIMARY KEY,
+    id_paciente INTEGER NOT NULL REFERENCES public.pacientes(id_paciente),
+    tipo_dispositivo VARCHAR(50),
+    local_insercao VARCHAR(50),
+    data_insercao TIMESTAMP WITH TIME ZONE,
+    profissional_insercao VARCHAR(100),
+    data_retirada TIMESTAMP WITH TIME ZONE,
+    motivo_retirada TEXT,
+    complicacoes TEXT,
+    observacoes TEXT
+);
+
+-- 2.2.3 Tabela: balanco_hidrico
+CREATE TABLE IF NOT EXISTS public.balanco_hidrico (
+    id_balanco SERIAL PRIMARY KEY,
+    id_paciente INTEGER NOT NULL REFERENCES public.pacientes(id_paciente),
+    data_inicio TIMESTAMP WITH TIME ZONE NOT NULL,
+    data_fim TIMESTAMP WITH TIME ZONE NOT NULL,
+    total_entradas NUMERIC,
+    total_saidas NUMERIC,
+    balanco NUMERIC,
+    status VARCHAR(20) CHECK (status IN ('aberto', 'fechado', 'revisado')),
+    fechado_por VARCHAR(100),
+    observacoes TEXT
+);
+
+-- 2.2.4 Tabela: entradas_balanco
+CREATE TABLE IF NOT EXISTS public.entradas_balanco (
+    id_entrada SERIAL PRIMARY KEY,
+    id_balanco INTEGER NOT NULL REFERENCES public.balanco_hidrico(id_balanco),
+    tipo_entrada VARCHAR(50) CHECK (tipo_entrada IN ('oral', 'sonda', 'parenteral', 'hemoderivado', 'medicacao', 'outro')),
+    descricao VARCHAR(100),
+    volume NUMERIC NOT NULL,
+    horario TIMESTAMP WITH TIME ZONE NOT NULL,
+    registrado_por VARCHAR(100)
+);
+
+-- 2.2.5 Tabela: saidas_balanco
+CREATE TABLE IF NOT EXISTS public.saidas_balanco (
+    id_saida SERIAL PRIMARY KEY,
+    id_balanco INTEGER NOT NULL REFERENCES public.balanco_hidrico(id_balanco),
+    tipo_saida VARCHAR(50) CHECK (tipo_saida IN ('diurese', 'evacuacao', 'emese', 'dreno', 'perspiracao', 'outro')),
+    descricao VARCHAR(100),
+    volume NUMERIC NOT NULL,
+    horario TIMESTAMP WITH TIME ZONE NOT NULL,
+    registrado_por VARCHAR(100)
+);
+
+-- 2.2.6 Tabela: sinais_vitais
+CREATE TABLE IF NOT EXISTS public.sinais_vitais (
+    id_sinal_vital SERIAL PRIMARY KEY,
+    id_paciente INTEGER NOT NULL REFERENCES public.pacientes(id_paciente),
+    data_registro TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    pa_sistolica INTEGER,
+    pa_diastolica INTEGER,
+    pam INTEGER,
+    fc INTEGER,
+    fr INTEGER,
+    temperatura NUMERIC(4,1),
+    saturacao INTEGER,
+    glicemia INTEGER,
+    registrado_por VARCHAR(100),
+    observacoes TEXT
+);
+
+-- 2.2.7 Tabela: log_alteracoes
+CREATE TABLE IF NOT EXISTS public.log_alteracoes (
+    id_log SERIAL PRIMARY KEY,
+    tabela VARCHAR(50) NOT NULL,
+    id_registro INTEGER NOT NULL,
+    id_usuario UUID,
+    data_alteracao TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    tipo_operacao VARCHAR(20) CHECK (tipo_operacao IN ('criar', 'atualizar', 'excluir')),
+    campo_alterado VARCHAR(100),
+    valor_anterior TEXT,
+    valor_novo TEXT
+);
+
+-- 2.2.8 Tabela: sistema_notificacoes
+CREATE TABLE IF NOT EXISTS public.sistema_notificacoes (
+    id_notificacao SERIAL PRIMARY KEY,
+    id_paciente INTEGER REFERENCES public.pacientes(id_paciente),
+    titulo VARCHAR(100) NOT NULL,
+    conteudo TEXT NOT NULL,
+    tipo_notificacao VARCHAR(50),
+    nivel_urgencia VARCHAR(20) CHECK (nivel_urgencia IN ('baixo', 'medio', 'alto', 'critico')),
+    data_criacao TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    data_leitura TIMESTAMP WITH TIME ZONE,
+    status VARCHAR(20) CHECK (status IN ('enviada', 'lida', 'respondida', 'arquivada')),
+    destinatario VARCHAR(100),
+    id_destinatario UUID
+);
+
+-- ===============================================
+-- 2.3 TABELAS DE SISTEMAS ESPECÍFICOS (44 tabelas)
+-- ===============================================
+
+-- ===============================================
+-- 2.3.1 Sistema Neurológico (9 tabelas)
+-- ===============================================
+
+-- Tabela 1: avaliacoes_neurologia
+CREATE TABLE IF NOT EXISTS public.avaliacoes_neurologia (
+    id_avaliacao_neuro SERIAL PRIMARY KEY,
+    id_avaliacao INTEGER NOT NULL REFERENCES public.avaliacoes_gerais(id_avaliacao),
+    data_avaliacao TIMESTAMP WITH TIME ZONE NOT NULL,
+    status VARCHAR(20) CHECK (status IN ('em_andamento', 'concluida')),
+    avaliador VARCHAR(100),
+    data_atualizacao TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 2: avaliacao_neurologica_completa
+CREATE TABLE IF NOT EXISTS public.avaliacao_neurologica_completa (
+    id_avaliacao_neuro_completa SERIAL PRIMARY KEY,
+    id_avaliacao_neuro INTEGER REFERENCES public.avaliacoes_neurologia(id_avaliacao_neuro),
+    -- Campos de todas as subavaliações em uma única tabela
+    nivel_consciencia_ecg INTEGER,
+    ecg_abertura_ocular INTEGER,
+    ecg_resposta_verbal INTEGER,
+    ecg_resposta_motora INTEGER,
+    rass INTEGER,
+    -- Campos de pupila
+    pupila_avaliada BOOLEAN DEFAULT TRUE,
+    pupila_justificativa TEXT,
+    pupila_formato VARCHAR(20) CHECK (pupila_formato IN ('mioticas', 'normais', 'midriaticas', 'nao_avaliado')),
+    -- Campos de dor
+    avaliacao_dor BOOLEAN DEFAULT TRUE,
+    dor_justificativa TEXT,
+    escala_dor VARCHAR(10) CHECK (escala_dor IN ('eva', 'bps')),
+    -- Campos de CAM-ICU
+    cam_icu_realizado BOOLEAN DEFAULT FALSE,
+    cam_icu_justificativa TEXT,
+    cam_icu_resultado VARCHAR(20) CHECK (cam_icu_resultado IN ('positivo', 'negativo')),
+    -- Campos de sedação/analgesia
+    sedacao_continua BOOLEAN DEFAULT FALSE,
+    sedativo_tipo VARCHAR(50),
+    sedativo_vazao DECIMAL(6,2),
+    sedativo_dose DECIMAL(10,4),
+    analgesia_continua BOOLEAN DEFAULT FALSE,
+    analgesico_tipo VARCHAR(50),
+    analgesico_vazao DECIMAL(6,2),
+    analgesico_dose DECIMAL(10,4),
+    -- Campos adicionais
+    despertar_diario_elegivel BOOLEAN,
+    despertar_justificativa TEXT,
+    eventos_neurologicos_agudos BOOLEAN DEFAULT FALSE,
+    descricao_eventos TEXT,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 3: nivel_consciencia
+CREATE TABLE IF NOT EXISTS public.nivel_consciencia (
+    id_nivel_consciencia SERIAL PRIMARY KEY,
+    id_avaliacao_neuro INTEGER NOT NULL REFERENCES public.avaliacoes_neurologia(id_avaliacao_neuro),
+    escala_utilizada VARCHAR(20) CHECK (escala_utilizada IN ('ecg', 'rass')),
+    valor_escala INTEGER,
+    abertura_ocular INTEGER,
+    resposta_verbal INTEGER,
+    resposta_motora INTEGER,
+    observacoes TEXT,
+    data_registro TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW()
+);
+
+-- Tabela 4: pupilas
+CREATE TABLE IF NOT EXISTS public.pupilas (
+    id_avaliacao_pupilas SERIAL PRIMARY KEY,
+    id_avaliacao_neuro INTEGER NOT NULL REFERENCES public.avaliacoes_neurologia(id_avaliacao_neuro),
+    pupila_direita_tamanho VARCHAR(20) CHECK (pupila_direita_tamanho IN ('miotica', 'normal', 'midriatica', 'nao_avaliado')),
+    pupila_direita_reatividade VARCHAR(20) CHECK (pupila_direita_reatividade IN ('reativa', 'pouco_reativa', 'nao_reativa', 'nao_avaliado')),
+    pupila_esquerda_tamanho VARCHAR(20) CHECK (pupila_esquerda_tamanho IN ('miotica', 'normal', 'midriatica', 'nao_avaliado')),
+    pupila_esquerda_reatividade VARCHAR(20) CHECK (pupila_esquerda_reatividade IN ('reativa', 'pouco_reativa', 'nao_reativa', 'nao_avaliado')),
+    simetria VARCHAR(20) CHECK (simetria IN ('simetricas', 'assimetricas')),
+    observacoes TEXT,
+    data_registro TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 5: dor
+CREATE TABLE IF NOT EXISTS public.dor (
+    id_avaliacao_dor SERIAL PRIMARY KEY,
+    id_avaliacao_neuro INTEGER NOT NULL REFERENCES public.avaliacoes_neurologia(id_avaliacao_neuro),
+    escala_utilizada VARCHAR(20) CHECK (escala_utilizada IN ('eva', 'bps', 'outro')),
+    valor_escala INTEGER,
+    localizacao VARCHAR(100),
+    caracteristica VARCHAR(50),
+    fatores_agravantes TEXT,
+    fatores_alivio TEXT,
+    observacoes TEXT,
+    data_registro TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 6: delirium
+CREATE TABLE IF NOT EXISTS public.delirium (
+    id_avaliacao_delirium SERIAL PRIMARY KEY,
+    id_avaliacao_neuro INTEGER NOT NULL REFERENCES public.avaliacoes_neurologia(id_avaliacao_neuro),
+    cam_icu_realizado BOOLEAN,
+    justificativa_nao_realizacao TEXT,
+    criterio1_alteracao_mental BOOLEAN,
+    criterio2_desatencao BOOLEAN,
+    criterio3a_alteracao_nivel_consciencia BOOLEAN,
+    criterio3b_pensamento_desorganizado BOOLEAN,
+    resultado VARCHAR(20) CHECK (resultado IN ('positivo', 'negativo', 'nao_avaliado')),
+    medidas_adotadas TEXT,
+    observacoes TEXT,
+    data_registro TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 7: sedacao_analgesia
+CREATE TABLE IF NOT EXISTS public.sedacao_analgesia (
+    id_sedacao_analgesia SERIAL PRIMARY KEY,
+    id_avaliacao_neuro INTEGER NOT NULL REFERENCES public.avaliacoes_neurologia(id_avaliacao_neuro),
+    sedacao_continua BOOLEAN DEFAULT FALSE,
+    id_medicamento_sedacao INTEGER REFERENCES public.medicamentos(id_medicamento),
+    vazao_sedacao_ml_h NUMERIC,
+    dose_calculada_sedacao NUMERIC,
+    meta_sedacao VARCHAR(50),
+    analgesia_continua BOOLEAN DEFAULT FALSE,
+    id_medicamento_analgesia INTEGER REFERENCES public.medicamentos(id_medicamento),
+    vazao_analgesia_ml_h NUMERIC,
+    dose_calculada_analgesia NUMERIC,
+    despertar_diario_elegivel BOOLEAN,
+    justificativa_despertar TEXT,
+    data_ultimo_despertar TIMESTAMP WITH TIME ZONE,
+    observacoes TEXT,
+    data_registro TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 8: despertar_diario
+CREATE TABLE IF NOT EXISTS public.despertar_diario (
+    id_despertar SERIAL PRIMARY KEY,
+    id_avaliacao_neuro INTEGER NOT NULL REFERENCES public.avaliacoes_neurologia(id_avaliacao_neuro),
+    data_inicio TIMESTAMP WITH TIME ZONE NOT NULL,
+    data_fim TIMESTAMP WITH TIME ZONE,
+    status_pre_despertar TEXT,
+    rass_pre_despertar INTEGER,
+    medicacoes_suspensas TEXT,
+    sucesso BOOLEAN,
+    justificativa_insucesso TEXT,
+    rass_pos_despertar INTEGER,
+    cam_icu_pos_despertar VARCHAR(20) CHECK (cam_icu_pos_despertar IN ('positivo', 'negativo', 'nao_avaliado')),
+    conduta_pos_despertar TEXT,
+    responsavel VARCHAR(100),
+    observacoes TEXT
+);
+
+-- Tabela 9: eventos_neurologicos
+CREATE TABLE IF NOT EXISTS public.eventos_neurologicos (
+    id_evento_neuro SERIAL PRIMARY KEY,
+    id_avaliacao_neuro INTEGER NOT NULL REFERENCES public.avaliacoes_neurologia(id_avaliacao_neuro),
+    tipo_evento VARCHAR(50) CHECK (tipo_evento IN ('convulsao', 'acidente_vascular', 'agitacao', 'outro')),
+    data_inicio TIMESTAMP WITH TIME ZONE NOT NULL,
+    data_fim TIMESTAMP WITH TIME ZONE,
+    descricao TEXT,
+    tratamento_adotado TEXT,
+    resposta_tratamento TEXT,
+    sequelas BOOLEAN,
+    descricao_sequelas TEXT,
+    registrado_por VARCHAR(100),
+    data_registro TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- ===============================================
+-- 2.3.2 Sistema Cardiovascular (4 tabelas)
+-- ===============================================
+
+-- Tabela 1: avaliacoes_cardio
+CREATE TABLE IF NOT EXISTS public.avaliacoes_cardio (
+    id_avaliacao_cardio SERIAL PRIMARY KEY,
+    id_avaliacao INTEGER NOT NULL REFERENCES public.avaliacoes_gerais(id_avaliacao),
+    data_avaliacao TIMESTAMP WITH TIME ZONE NOT NULL,
+    status VARCHAR(20) CHECK (status IN ('em_andamento', 'concluida')),
+    avaliador VARCHAR(100),
+    data_atualizacao TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 2: drogas_vasoativas
+CREATE TABLE IF NOT EXISTS public.drogas_vasoativas (
+    id_drogas_vasoativas SERIAL PRIMARY KEY,
+    id_avaliacao_cardio INTEGER NOT NULL REFERENCES public.avaliacoes_cardio(id_avaliacao_cardio),
+    infusao_continua BOOLEAN DEFAULT FALSE,
+    id_medicamento INTEGER REFERENCES public.medicamentos(id_medicamento),
+    vazao_ml_h NUMERIC,
+    dose_calculada NUMERIC,
+    desmame_elegivel BOOLEAN,
+    justificativa_desmame TEXT
+);
+
+-- Tabela 3: hemodinamica
+CREATE TABLE IF NOT EXISTS public.hemodinamica (
+    id_hemodinamica SERIAL PRIMARY KEY,
+    id_avaliacao_cardio INTEGER NOT NULL REFERENCES public.avaliacoes_cardio(id_avaliacao_cardio),
+    pa_sistolica INTEGER,
+    pa_diastolica INTEGER,
+    pam INTEGER,
+    fc INTEGER,
+    dc NUMERIC,
+    ic NUMERIC,
+    pvc INTEGER,
+    poap INTEGER,
+    rvs NUMERIC,
+    svco2 NUMERIC,
+    lactato NUMERIC,
+    tec NUMERIC,
+    observacoes TEXT,
+    data_registro TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 4: ritmo_cardiaco
+CREATE TABLE IF NOT EXISTS public.ritmo_cardiaco (
+    id_ritmo SERIAL PRIMARY KEY,
+    id_avaliacao_cardio INTEGER NOT NULL REFERENCES public.avaliacoes_cardio(id_avaliacao_cardio),
+    ritmo VARCHAR(50) CHECK (ritmo IN ('sinusal', 'fa', 'flutter', 'tpsv', 'tv', 'fv', 'assistolia', 'outro')),
+    fc INTEGER,
+    intervalo_pr NUMERIC,
+    intervalo_qt NUMERIC,
+    alteracoes_st TEXT,
+    alteracoes_onda_t TEXT,
+    bloqueios TEXT,
+    data_registro TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    observacoes TEXT
+);
+
+-- ===============================================
+-- 2.3.3 Sistema Respiratório (7 tabelas)
+-- ===============================================
+
+-- Tabela 1: avaliacoes_respiratoria
+CREATE TABLE IF NOT EXISTS public.avaliacoes_respiratoria (
+    id_avaliacao_resp SERIAL PRIMARY KEY,
+    id_avaliacao INTEGER NOT NULL REFERENCES public.avaliacoes_gerais(id_avaliacao),
+    data_avaliacao TIMESTAMP WITH TIME ZONE NOT NULL,
+    status VARCHAR(20) CHECK (status IN ('em_andamento', 'concluida')),
+    avaliador VARCHAR(100),
+    data_atualizacao TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 2: ventilacao_mecanica
+CREATE TABLE IF NOT EXISTS public.ventilacao_mecanica (
+    id_ventilacao SERIAL PRIMARY KEY,
+    id_avaliacao_resp INTEGER NOT NULL REFERENCES public.avaliacoes_respiratoria(id_avaliacao_resp),
+    modo_ventilatorio VARCHAR(50),
+    fio2 INTEGER,
+    peep INTEGER,
+    pressao_pico INTEGER,
+    pressao_platô INTEGER,
+    volume_corrente INTEGER,
+    volume_minuto NUMERIC,
+    complacencia NUMERIC,
+    resistencia NUMERIC,
+    drive_pressure INTEGER,
+    f_mandatoria INTEGER,
+    f_espontanea INTEGER,
+    f_total INTEGER,
+    relacao_ie VARCHAR(10),
+    auto_peep INTEGER,
+    observacoes TEXT,
+    data_registro TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 3: gasometria
+CREATE TABLE IF NOT EXISTS public.gasometria (
+    id_gasometria SERIAL PRIMARY KEY,
+    id_avaliacao_resp INTEGER NOT NULL REFERENCES public.avaliacoes_respiratoria(id_avaliacao_resp),
+    tipo_amostra VARCHAR(20) CHECK (tipo_amostra IN ('arterial', 'venosa', 'capilar')),
+    data_coleta TIMESTAMP WITH TIME ZONE,
+    ph NUMERIC,
+    pao2 NUMERIC,
+    paco2 NUMERIC,
+    hco3 NUMERIC,
+    be NUMERIC,
+    sao2 NUMERIC,
+    lactato NUMERIC,
+    interpretacao TEXT,
+    observacoes TEXT,
+    data_registro TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 4: avaliacao_respiratoria
+CREATE TABLE IF NOT EXISTS public.avaliacao_respiratoria (
+    id_avaliacao_resp_fisica SERIAL PRIMARY KEY,
+    id_avaliacao_resp INTEGER NOT NULL REFERENCES public.avaliacoes_respiratoria(id_avaliacao_resp),
+    padrao_respiratorio VARCHAR(50),
+    expansibilidade VARCHAR(50),
+    ausculta TEXT,
+    tosse VARCHAR(50),
+    secrecao BOOLEAN,
+    caracteristica_secrecao TEXT,
+    volume_secrecao VARCHAR(20),
+    via_aerea_artificial VARCHAR(50),
+    data_intubacao TIMESTAMP WITH TIME ZONE,
+    observacoes TEXT,
+    data_registro TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 5: oxigenacao
+CREATE TABLE IF NOT EXISTS public.oxigenacao (
+    id_oxigenacao SERIAL PRIMARY KEY,
+    id_avaliacao_resp INTEGER NOT NULL REFERENCES public.avaliacoes_respiratoria(id_avaliacao_resp),
+    dispositivo VARCHAR(50),
+    fluxo_o2 NUMERIC,
+    fio2 INTEGER,
+    spo2 INTEGER,
+    pao2_fio2 NUMERIC,
+    indice_rox NUMERIC,
+    observacoes TEXT,
+    data_registro TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 6: intubacao
+CREATE TABLE IF NOT EXISTS public.intubacao (
+    id_intubacao SERIAL PRIMARY KEY,
+    id_paciente INTEGER NOT NULL REFERENCES public.pacientes(id_paciente),
+    data_intubacao TIMESTAMP WITH TIME ZONE NOT NULL,
+    motivo TEXT,
+    tipo_tubo VARCHAR(50),
+    tamanho_tubo VARCHAR(20),
+    fixacao_cm INTEGER,
+    profissional_responsavel VARCHAR(100),
+    dificuldade_via_aerea BOOLEAN,
+    detalhes_dificuldade TEXT,
+    complicacoes TEXT,
+    data_extubacao TIMESTAMP WITH TIME ZONE,
+    motivo_extubacao TEXT,
+    observacoes TEXT
+);
+
+-- Tabela 7: aspiracao
+CREATE TABLE IF NOT EXISTS public.aspiracao (
+    id_aspiracao SERIAL PRIMARY KEY,
+    id_avaliacao_resp INTEGER NOT NULL REFERENCES public.avaliacoes_respiratoria(id_avaliacao_resp),
+    data_hora TIMESTAMP WITH TIME ZONE NOT NULL,
+    tipo_aspiracao VARCHAR(50) CHECK (tipo_aspiracao IN ('fechada', 'aberta', 'nasotraqueal', 'orotraqueal')),
+    quantidade VARCHAR(20) CHECK (quantidade IN ('pequena', 'moderada', 'grande')),
+    caracteristica TEXT,
+    cor VARCHAR(30),
+    consistencia VARCHAR(30),
+    odor VARCHAR(30),
+    resposta_paciente TEXT,
+    complicacoes TEXT,
+    realizado_por VARCHAR(100),
+    observacoes TEXT
+);
+
+-- ===============================================
+-- 2.3.4 Sistema Renal (6 tabelas)
+-- ===============================================
+
+-- Tabela 1: avaliacoes_renal
+CREATE TABLE IF NOT EXISTS public.avaliacoes_renal (
+    id_avaliacao_renal SERIAL PRIMARY KEY,
+    id_avaliacao INTEGER NOT NULL REFERENCES public.avaliacoes_gerais(id_avaliacao),
+    data_avaliacao TIMESTAMP WITH TIME ZONE NOT NULL,
+    status VARCHAR(20) CHECK (status IN ('em_andamento', 'concluida')),
+    avaliador VARCHAR(100),
+    data_atualizacao TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 2: diurese
+CREATE TABLE IF NOT EXISTS public.diurese (
+    id_diurese SERIAL PRIMARY KEY,
+    id_avaliacao_renal INTEGER NOT NULL REFERENCES public.avaliacoes_renal(id_avaliacao_renal),
+    data_hora TIMESTAMP WITH TIME ZONE NOT NULL,
+    volume_ml INTEGER,
+    tipo VARCHAR(50) CHECK (tipo IN ('espontanea', 'svd', 'cistostomia', 'outro')),
+    aspecto VARCHAR(50),
+    cor VARCHAR(30),
+    densidade NUMERIC,
+    observacoes TEXT,
+    registrado_por VARCHAR(100)
+);
+
+-- Tabela 3: controle_hidrico
+CREATE TABLE IF NOT EXISTS public.controle_hidrico (
+    id_controle_hidrico SERIAL PRIMARY KEY,
+    id_avaliacao_renal INTEGER NOT NULL REFERENCES public.avaliacoes_renal(id_avaliacao_renal),
+    data_registro TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    diurese_24h INTEGER,
+    diurese_kg_h NUMERIC,
+    balanco_acumulado INTEGER,
+    restricao_hidrica BOOLEAN,
+    volume_maximo_24h INTEGER,
+    observacoes TEXT
+);
+
+-- Tabela 4: funcao_renal
+CREATE TABLE IF NOT EXISTS public.funcao_renal (
+    id_funcao_renal SERIAL PRIMARY KEY,
+    id_avaliacao_renal INTEGER NOT NULL REFERENCES public.avaliacoes_renal(id_avaliacao_renal),
+    data_registro TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
+    ureia NUMERIC,
+    creatinina NUMERIC,
+    clearance_creatinina NUMERIC,
+    taxa_filtracao_glomerular NUMERIC,
+    estadio_drc VARCHAR(10),
+    potassio NUMERIC,
+    sodio NUMERIC,
+    fosforo NUMERIC,
+    lesao_renal_aguda BOOLEAN,
+    estadio_kdigo VARCHAR(10),
+    observacoes TEXT
+);
+
+-- Tabela 5: terapia_renal_substitutiva
+CREATE TABLE IF NOT EXISTS public.terapia_renal_substitutiva (
+    id_trs SERIAL PRIMARY KEY,
+    id_paciente INTEGER NOT NULL REFERENCES public.pacientes(id_paciente),
+    tipo_terapia VARCHAR(50) CHECK (tipo_terapia IN ('hemodialise', 'hemofiltracao', 'hemodiafiltração', 'dialise_peritoneal')),
+    data_inicio TIMESTAMP WITH TIME ZONE NOT NULL,
+    data_fim TIMESTAMP WITH TIME ZONE,
+    acesso VARCHAR(50),
+    local_acesso VARCHAR(50),
+    anticoagulacao VARCHAR(50),
+    dose_anticoagulacao TEXT,
+    ultrafiltrado_total INTEGER,
+    intercorrencias TEXT,
+    observacoes TEXT
+);
+
+-- Tabela 6: controles_trs
+CREATE TABLE IF NOT EXISTS public.controles_trs (
+    id_controle_trs SERIAL PRIMARY KEY,
+    id_trs INTEGER NOT NULL REFERENCES public.terapia_renal_substitutiva(id_trs),
+    hora_registro TIMESTAMP WITH TIME ZONE NOT NULL,
+    pa_pre VARCHAR(20),
+    pa_pos VARCHAR(20),
+    fluxo_sangue INTEGER,
+    fluxo_dialisato INTEGER,
+    pressao_arterial_linha INTEGER,
+    pressao_venosa_linha INTEGER,
+    temperatura NUMERIC,
+    condutividade NUMERIC,
+    ktv NUMERIC,
+    uf_parcial INTEGER,
+    intercorrencias TEXT,
+    registrado_por VARCHAR(100)
+);
+
+-- ===============================================
+-- 2.3.5 Sistema Gastrointestinal (7 tabelas)
+-- ===============================================
+
+-- Tabela 1: avaliacoes_gastrointestinal
+CREATE TABLE IF NOT EXISTS public.avaliacoes_gastrointestinal (
+    id_avaliacao_gi SERIAL PRIMARY KEY,
+    id_avaliacao INTEGER NOT NULL REFERENCES public.avaliacoes_gerais(id_avaliacao),
+    data_avaliacao TIMESTAMP WITH TIME ZONE NOT NULL,
+    status VARCHAR(20) CHECK (status IN ('em_andamento', 'concluida')),
+    avaliador VARCHAR(100),
+    data_atualizacao TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 2: avaliacao_abdome
+CREATE TABLE IF NOT EXISTS public.avaliacao_abdome (
+    id_avaliacao_abdome SERIAL PRIMARY KEY,
+    id_avaliacao_gi INTEGER NOT NULL REFERENCES public.avaliacoes_gastrointestinal(id_avaliacao_gi),
+    inspecao TEXT,
+    ausculta TEXT,
+    percussao TEXT,
+    palpacao TEXT,
+    ruidos_hidroaereos VARCHAR(50),
+    distensao BOOLEAN,
+    dor_palpacao BOOLEAN,
+    local_dor TEXT,
+    descompressao_brusca BOOLEAN,
+    observacoes TEXT,
+    data_registro TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 3: evacuacao
+CREATE TABLE IF NOT EXISTS public.evacuacao (
+    id_evacuacao SERIAL PRIMARY KEY,
+    id_avaliacao_gi INTEGER NOT NULL REFERENCES public.avaliacoes_gastrointestinal(id_avaliacao_gi),
+    data_hora TIMESTAMP WITH TIME ZONE NOT NULL,
+    caracteristica VARCHAR(50),
+    quantidade VARCHAR(20) CHECK (quantidade IN ('pequena', 'moderada', 'grande')),
+    consistencia VARCHAR(50),
+    cor VARCHAR(50),
+    odor VARCHAR(50),
+    presenca_sangue BOOLEAN,
+    registrado_por VARCHAR(100),
+    observacoes TEXT
+);
+
+-- Tabela 4: terapia_nutricional
+CREATE TABLE IF NOT EXISTS public.terapia_nutricional (
+    id_terapia_nutricional SERIAL PRIMARY KEY,
+    id_avaliacao_gi INTEGER NOT NULL REFERENCES public.avaliacoes_gastrointestinal(id_avaliacao_gi),
+    via VARCHAR(50) CHECK (via IN ('oral', 'enteral', 'parenteral', 'mista')),
+    tipo_dieta_enteral VARCHAR(100),
+    tipo_dieta_oral VARCHAR(100),
+    consistencia VARCHAR(50),
+    formula VARCHAR(100),
+    densidade_calorica NUMERIC,
+    vazao_ml_h INTEGER,
+    volume_24h INTEGER,
+    calorias_totais INTEGER,
+    proteinas_g INTEGER,
+    aceitacao_percentual INTEGER,
+    suplementos TEXT,
+    restricoes TEXT,
+    observacoes TEXT,
+    data_registro TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 5: calculo_nutricional
+CREATE TABLE IF NOT EXISTS public.calculo_nutricional (
+    id_calculo_nutricional SERIAL PRIMARY KEY,
+    id_avaliacao_gi INTEGER NOT NULL REFERENCES public.avaliacoes_gastrointestinal(id_avaliacao_gi),
+    tmb_kcal_dia INTEGER,
+    fator_atividade NUMERIC,
+    fator_injuria NUMERIC,
+    fator_termico NUMERIC,
+    get_kcal_dia INTEGER,
+    meta_proteica_g_dia INTEGER,
+    meta_proteica_g_kg NUMERIC,
+    relacao_kcal_n NUMERIC,
+    calorias_recebidas_kcal_dia INTEGER,
+    proteinas_recebidas_g_dia INTEGER,
+    deficit_calorico INTEGER,
+    deficit_proteico INTEGER,
+    observacoes TEXT,
+    data_registro TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 6: jejum
+CREATE TABLE IF NOT EXISTS public.jejum (
+    id_jejum SERIAL PRIMARY KEY,
+    id_paciente INTEGER NOT NULL REFERENCES public.pacientes(id_paciente),
+    data_inicio TIMESTAMP WITH TIME ZONE NOT NULL,
+    data_fim TIMESTAMP WITH TIME ZONE,
+    motivo TEXT,
+    tipo_procedimento VARCHAR(100),
+    tempo_total_h INTEGER,
+    impacto_terapia_nutricional TEXT,
+    observacoes TEXT,
+    registrado_por VARCHAR(100),
+    data_registro TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 7: estase_gastrica
+CREATE TABLE IF NOT EXISTS public.estase_gastrica (
+    id_estase SERIAL PRIMARY KEY,
+    id_avaliacao_gi INTEGER NOT NULL REFERENCES public.avaliacoes_gastrointestinal(id_avaliacao_gi),
+    data_hora TIMESTAMP WITH TIME ZONE NOT NULL,
+    volume_residual INTEGER,
+    caracteristica VARCHAR(50),
+    cor VARCHAR(50),
+    conduta VARCHAR(100) CHECK (conduta IN ('reinfundir', 'desprezar', 'pausar_dieta', 'reduzir_vazao')),
+    vazao_pos_ml_h INTEGER,
+    observacoes TEXT,
+    registrado_por VARCHAR(100)
+);
+
+-- ===============================================
+-- 2.3.6 Sistema Infeccioso (7 tabelas)
+-- ===============================================
+
+-- Tabela 1: avaliacoes_infeccao
+CREATE TABLE IF NOT EXISTS public.avaliacoes_infeccao (
+    id_avaliacao_infec SERIAL PRIMARY KEY,
+    id_avaliacao INTEGER NOT NULL REFERENCES public.avaliacoes_gerais(id_avaliacao),
+    data_avaliacao TIMESTAMP WITH TIME ZONE NOT NULL,
+    status VARCHAR(20) CHECK (status IN ('em_andamento', 'concluida')),
+    avaliador VARCHAR(100),
+    data_atualizacao TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 2: infeccoes
+CREATE TABLE IF NOT EXISTS public.infeccoes (
+    id_infeccao SERIAL PRIMARY KEY,
+    id_avaliacao_infec INTEGER NOT NULL REFERENCES public.avaliacoes_infeccao(id_avaliacao_infec),
+    tipo_infeccao VARCHAR(50) CHECK (tipo_infeccao IN ('corrente_sanguinea', 'trato_respiratorio', 'trato_urinario', 'ferida_operatoria', 'pele', 'outro')),
+    foco_primario VARCHAR(100),
+    data_inicio TIMESTAMP WITH TIME ZONE,
+    agente_etiologico VARCHAR(100),
+    confirmacao_laboratorial BOOLEAN,
+    classificacao VARCHAR(50) CHECK (classificacao IN ('comunitaria', 'hospitalar', 'relacionada_assistencia')),
+    iras BOOLEAN,
+    dispositivo_invasivo BOOLEAN,
+    id_dispositivo INTEGER REFERENCES public.dispositivos_invasivos(id_dispositivo),
+    status VARCHAR(20) CHECK (status IN ('ativo', 'em_tratamento', 'resolvido')),
+    data_resolucao TIMESTAMP WITH TIME ZONE,
+    observacoes TEXT,
+    data_registro TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 3: antibioticos
+CREATE TABLE IF NOT EXISTS public.antibioticos (
+    id_antibiotico SERIAL PRIMARY KEY,
+    id_infeccao INTEGER NOT NULL REFERENCES public.infeccoes(id_infeccao),
+    nome VARCHAR(100) NOT NULL,
+    dose VARCHAR(50),
+    intervalo VARCHAR(20),
+    via_administracao VARCHAR(20),
+    data_inicio TIMESTAMP WITH TIME ZONE NOT NULL,
+    data_fim TIMESTAMP WITH TIME ZONE,
+    motivo_suspensao TEXT,
+    cobertura TEXT,
+    alvo_terapeutico TEXT,
+    nivel_serico NUMERIC,
+    ajuste_funcao_renal BOOLEAN,
+    observacoes TEXT,
+    data_registro TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 4: culturas
+CREATE TABLE IF NOT EXISTS public.culturas (
+    id_cultura SERIAL PRIMARY KEY,
+    id_avaliacao_infec INTEGER NOT NULL REFERENCES public.avaliacoes_infeccao(id_avaliacao_infec),
+    tipo_amostra VARCHAR(50),
+    local_coleta VARCHAR(100),
+    data_coleta TIMESTAMP WITH TIME ZONE,
+    data_resultado TIMESTAMP WITH TIME ZONE,
+    resultado TEXT,
+    microrganismo VARCHAR(100),
+    antibiograma TEXT,
+    observacoes TEXT,
+    data_registro TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 5: resistencia_antimicrobiana
+CREATE TABLE IF NOT EXISTS public.resistencia_antimicrobiana (
+    id_resistencia SERIAL PRIMARY KEY,
+    id_cultura INTEGER NOT NULL REFERENCES public.culturas(id_cultura),
+    microrganismo VARCHAR(100) NOT NULL,
+    antibiotico VARCHAR(100) NOT NULL,
+    resultado VARCHAR(20) CHECK (resultado IN ('sensivel', 'intermediario', 'resistente')),
+    mic NUMERIC,
+    mecanismo_resistencia TEXT,
+    observacoes TEXT,
+    data_registro TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 6: precaucoes
+CREATE TABLE IF NOT EXISTS public.precaucoes (
+    id_precaucao SERIAL PRIMARY KEY,
+    id_paciente INTEGER NOT NULL REFERENCES public.pacientes(id_paciente),
+    tipo_precaucao VARCHAR(50) CHECK (tipo_precaucao IN ('padrao', 'contato', 'gotículas', 'aerossois', 'contato_gotículas', 'contato_aerossois')),
+    motivo TEXT,
+    data_inicio TIMESTAMP WITH TIME ZONE NOT NULL,
+    data_fim TIMESTAMP WITH TIME ZONE,
+    avaliacao_scih BOOLEAN,
+    recomendacoes TEXT,
+    observacoes TEXT,
+    registrado_por VARCHAR(100),
+    data_registro TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 7: sinais_infeccao
+CREATE TABLE IF NOT EXISTS public.sinais_infeccao (
+    id_sinais_infeccao SERIAL PRIMARY KEY,
+    id_avaliacao_infec INTEGER NOT NULL REFERENCES public.avaliacoes_infeccao(id_avaliacao_infec),
+    temperatura NUMERIC,
+    fc INTEGER,
+    leucocitos INTEGER,
+    neutrofilos INTEGER,
+    bastoes INTEGER,
+    pcr NUMERIC,
+    procalcitonina NUMERIC,
+    lactato NUMERIC,
+    qsofa INTEGER,
+    sofa INTEGER,
+    sepse BOOLEAN,
+    choque_septico BOOLEAN,
+    foco_provavel TEXT,
+    observacoes TEXT,
+    data_registro TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 8: bundle_prevencao (vou adicionar esta tabela que estava faltando no script anterior)
+CREATE TABLE IF NOT EXISTS public.bundle_prevencao (
+    id_bundle SERIAL PRIMARY KEY,
+    id_avaliacao_infec INTEGER NOT NULL REFERENCES public.avaliacoes_infeccao(id_avaliacao_infec),
+    tipo_bundle VARCHAR(50) CHECK (tipo_bundle IN ('pac', 'ics', 'itu', 'pab')),
+    cabeceira_elevada BOOLEAN,
+    higiene_oral BOOLEAN,
+    pressao_cuff_adequada BOOLEAN,
+    interrupcao_sedacao BOOLEAN,
+    profilaxia_tev BOOLEAN,
+    profilaxia_ulcera BOOLEAN,
+    higiene_maos BOOLEAN,
+    precaucoes_barreira BOOLEAN,
+    clorexidina_alcoolica BOOLEAN,
+    campo_esteril BOOLEAN,
+    avaliacao_diaria_dispositivos BOOLEAN,
+    score_conformidade INTEGER,
+    observacoes TEXT,
+    data_registro TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- ===============================================
+-- 2.3.7 Sistema de Riscos (4 tabelas)
+-- ===============================================
+
+-- Tabela 1: avaliacoes_riscos
+CREATE TABLE IF NOT EXISTS public.avaliacoes_riscos (
+    id_avaliacao_riscos SERIAL PRIMARY KEY,
+    id_avaliacao INTEGER NOT NULL REFERENCES public.avaliacoes_gerais(id_avaliacao),
+    data_avaliacao TIMESTAMP WITH TIME ZONE NOT NULL,
+    status VARCHAR(20) CHECK (status IN ('em_andamento', 'concluida')),
+    avaliador VARCHAR(100),
+    data_atualizacao TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 2: riscos_lesao
+CREATE TABLE IF NOT EXISTS public.riscos_lesao (
+    id_risco_lesao SERIAL PRIMARY KEY,
+    id_avaliacao_riscos INTEGER NOT NULL REFERENCES public.avaliacoes_riscos(id_avaliacao_riscos),
+    tipo_avaliacao VARCHAR(50) CHECK (tipo_avaliacao IN ('braden', 'push', 'outro')),
+    score_total INTEGER,
+    nivel_risco VARCHAR(20) CHECK (nivel_risco IN ('baixo', 'moderado', 'alto', 'muito_alto')),
+    percepcao_sensorial INTEGER,
+    umidade INTEGER,
+    atividade INTEGER,
+    mobilidade INTEGER,
+    nutricao INTEGER,
+    friccao_cisalhamento INTEGER,
+    medidas_prevencao TEXT,
+    possui_lesao BOOLEAN,
+    observacoes TEXT,
+    data_registro TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 3: lesoes
+CREATE TABLE IF NOT EXISTS public.lesoes (
+    id_lesao SERIAL PRIMARY KEY,
+    id_paciente INTEGER NOT NULL REFERENCES public.pacientes(id_paciente),
+    tipo_lesao VARCHAR(50) CHECK (tipo_lesao IN ('pressao', 'cirurgica', 'traumatica', 'queimadura', 'dermatite', 'vascular', 'outra')),
+    localizacao VARCHAR(100) NOT NULL,
+    data_identificacao TIMESTAMP WITH TIME ZONE NOT NULL,
+    estadiamento VARCHAR(50),
+    comprimento_cm NUMERIC,
+    largura_cm NUMERIC,
+    profundidade_cm NUMERIC,
+    tunelizacao BOOLEAN,
+    exsudato VARCHAR(50),
+    odor VARCHAR(50),
+    tecido_leito VARCHAR(100),
+    bordas VARCHAR(50),
+    pele_perilesional VARCHAR(100),
+    tratamento_atual TEXT,
+    evolucao TEXT,
+    data_fechamento TIMESTAMP WITH TIME ZONE,
+    observacoes TEXT,
+    data_registro TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 4: risco_quedas
+CREATE TABLE IF NOT EXISTS public.risco_quedas (
+    id_risco_quedas SERIAL PRIMARY KEY,
+    id_avaliacao_riscos INTEGER NOT NULL REFERENCES public.avaliacoes_riscos(id_avaliacao_riscos),
+    tipo_avaliacao VARCHAR(50) CHECK (tipo_avaliacao IN ('morse', 'stratify', 'outro')),
+    score_total INTEGER,
+    nivel_risco VARCHAR(20) CHECK (nivel_risco IN ('baixo', 'moderado', 'alto')),
+    historico_quedas INTEGER,
+    diagnostico_secundario INTEGER,
+    auxilio_deambulacao INTEGER,
+    terapia_endovenosa INTEGER,
+    marcha INTEGER,
+    estado_mental INTEGER,
+    medidas_prevencao TEXT,
+    observacoes TEXT,
+    data_registro TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 5: avaliacao_nutricional
+CREATE TABLE IF NOT EXISTS public.avaliacao_nutricional (
+    id_avaliacao_nutri SERIAL PRIMARY KEY,
+    id_avaliacao_riscos INTEGER NOT NULL REFERENCES public.avaliacoes_riscos(id_avaliacao_riscos),
+    tipo_avaliacao VARCHAR(50) CHECK (tipo_avaliacao IN ('aspen', 'must', 'outro')),
+    score_total INTEGER,
+    nivel_risco VARCHAR(20) CHECK (nivel_risco IN ('baixo', 'moderado', 'alto')),
+    peso_atual NUMERIC,
+    peso_usual NUMERIC,
+    peso_ideal NUMERIC,
+    altura_cm INTEGER,
+    imc NUMERIC,
+    perda_peso_recente BOOLEAN,
+    percentual_perda_peso NUMERIC,
+    tempo_perda_peso VARCHAR(50),
+    alteracao_ingestao BOOLEAN,
+    tipo_alteracao_ingestao TEXT,
+    sintomas_gastrointestinais TEXT,
+    capacidade_funcional VARCHAR(50),
+    demanda_metabolica VARCHAR(50),
+    diagnostico_nutricional TEXT,
+    observacoes TEXT,
+    data_registro TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- ===============================================
+-- 2.4 TABELAS DE SUPORTE E CONFIGURAÇÃO (10 tabelas)
+-- ===============================================
+
+-- Tabela 1: usuarios
+CREATE TABLE IF NOT EXISTS public.usuarios (
+    id_usuario UUID PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    funcao VARCHAR(50),
+    registro_profissional VARCHAR(50),
+    perfil VARCHAR(20) CHECK (perfil IN ('admin', 'medico', 'enfermeiro', 'fisio', 'nutri', 'farmaceutico', 'outro')),
+    status VARCHAR(20) CHECK (status IN ('ativo', 'inativo', 'bloqueado')),
+    data_criacao TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    ultimo_acesso TIMESTAMP WITH TIME ZONE
+);
+
+-- Tabela 2: configuracoes_sistema
+CREATE TABLE IF NOT EXISTS public.configuracoes_sistema (
+    id_configuracao SERIAL PRIMARY KEY,
+    chave VARCHAR(50) NOT NULL UNIQUE,
+    valor TEXT,
+    descricao TEXT,
+    tipo VARCHAR(20) CHECK (tipo IN ('texto', 'numero', 'boolean', 'json')),
+    alteravel BOOLEAN DEFAULT TRUE,
+    data_atualizacao TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 3: logs_sistema
+CREATE TABLE IF NOT EXISTS public.logs_sistema (
+    id_log SERIAL PRIMARY KEY,
+    id_usuario UUID,
+    acao VARCHAR(50),
+    tabela_afetada VARCHAR(50),
+    id_registro INTEGER,
+    detalhes TEXT,
+    ip_origem VARCHAR(50),
+    user_agent TEXT,
+    data_hora TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 4: auditorias
+CREATE TABLE IF NOT EXISTS public.auditorias (
+    id_auditoria SERIAL PRIMARY KEY,
+    tipo_auditoria VARCHAR(50),
+    escopo VARCHAR(50),
+    data_inicio TIMESTAMP WITH TIME ZONE,
+    data_fim TIMESTAMP WITH TIME ZONE,
+    responsavel VARCHAR(100),
+    criterios TEXT,
+    achados TEXT,
+    recomendacoes TEXT,
+    status VARCHAR(20) CHECK (status IN ('planejada', 'em_andamento', 'concluida', 'monitoramento')),
+    data_registro TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Tabela 5: parametros_escala
+CREATE TABLE IF NOT EXISTS public.parametros_escala (
+    id_parametro SERIAL PRIMARY KEY,
+    escala VARCHAR(50) NOT NULL,
+    valor_minimo INTEGER,
+    valor_maximo INTEGER,
+    interpretacao_valor TEXT,
+    descricao TEXT,
+    cor_dashboard VARCHAR(20),
+    alerta_sistema BOOLEAN DEFAULT FALSE,
+    alerta_mensagem TEXT
+);
+
+-- Tabela 6: templates_documentos
+CREATE TABLE IF NOT EXISTS public.templates_documentos (
+    id_template SERIAL PRIMARY KEY,
+    tipo_documento VARCHAR(50) NOT NULL,
+    nome_template VARCHAR(100) NOT NULL,
+    conteudo TEXT,
+    campos_variaveis TEXT,
+    ativo BOOLEAN DEFAULT TRUE,
+    criado_por UUID,
+    data_criacao TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    data_atualizacao TIMESTAMP WITH TIME ZONE
+);
+
+-- Tabela 7: protocolos_institucionais
+CREATE TABLE IF NOT EXISTS public.protocolos_institucionais (
+    id_protocolo SERIAL PRIMARY KEY,
+    nome VARCHAR(100) NOT NULL,
+    categoria VARCHAR(50),
+    descricao TEXT,
+    conteudo TEXT,
+    versao VARCHAR(20),
+    responsavel VARCHAR(100),
+    data_criacao TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    data_revisao TIMESTAMP WITH TIME ZONE,
+    data_proxima_revisao TIMESTAMP WITH TIME ZONE,
+    ativo BOOLEAN DEFAULT TRUE
+);
+
+-- Tabela 8: acesso_sistemas
+CREATE TABLE IF NOT EXISTS public.acesso_sistemas (
+    id_acesso SERIAL PRIMARY KEY,
+    id_usuario UUID NOT NULL,
+    sistema VARCHAR(50),
+    data_hora_inicio TIMESTAMP WITH TIME ZONE NOT NULL,
+    data_hora_fim TIMESTAMP WITH TIME ZONE,
+    ip_origem VARCHAR(50),
+    dispositivo VARCHAR(100),
+    localizacao VARCHAR(100),
+    sucesso BOOLEAN,
+    motivo_falha TEXT
+);
+
+-- Tabela 9: mensagens_sistema
+CREATE TABLE IF NOT EXISTS public.mensagens_sistema (
+    id_mensagem SERIAL PRIMARY KEY,
+    remetente UUID,
+    destinatario UUID,
+    assunto VARCHAR(100),
+    conteudo TEXT,
+    tipo_mensagem VARCHAR(50) CHECK (tipo_mensagem IN ('alerta', 'notificacao', 'mensagem', 'sistema')),
+    prioridade VARCHAR(20) CHECK (prioridade IN ('baixa', 'normal', 'alta', 'urgente')),
+    data_envio TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    data_leitura TIMESTAMP WITH TIME ZONE,
+    status VARCHAR(20) CHECK (status IN ('enviada', 'lida', 'arquivada', 'excluida'))
+);
+
+-- Tabela 10: parametros_alertas
+CREATE TABLE IF NOT EXISTS public.parametros_alertas (
+    id_parametro_alerta SERIAL PRIMARY KEY,
+    nome_parametro VARCHAR(50) NOT NULL,
+    tipo_parametro VARCHAR(50) NOT NULL,
+    valor_minimo_alerta NUMERIC,
+    valor_maximo_alerta NUMERIC,
+    valor_minimo_critico NUMERIC,
+    valor_maximo_critico NUMERIC,
+    tempo_reavaliacao INTEGER,
+    destinatarios TEXT,
+    mensagem_alerta TEXT,
+    ativo BOOLEAN DEFAULT TRUE,
+    data_atualizacao TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- ===============================================
+-- 7.1 ÍNDICES DE PERFORMANCE
+-- ===============================================
+
+-- Índices para relacionamentos
+CREATE INDEX idx_paciente_id ON avaliacoes_gerais(id_paciente);
+CREATE INDEX idx_avaliacao_id ON problemas(id_avaliacao);
+CREATE INDEX idx_avaliacao_geral ON avaliacoes_neurologia(id_avaliacao);
+CREATE INDEX idx_avaliacao_cardio_geral ON avaliacoes_cardio(id_avaliacao);
+CREATE INDEX idx_avaliacao_resp_geral ON avaliacoes_respiratoria(id_avaliacao);
+CREATE INDEX idx_avaliacao_renal_geral ON avaliacoes_renal(id_avaliacao);
+CREATE INDEX idx_avaliacao_gi_geral ON avaliacoes_gastrointestinal(id_avaliacao);
+CREATE INDEX idx_avaliacao_infec_geral ON avaliacoes_infeccao(id_avaliacao);
+CREATE INDEX idx_avaliacao_risco_geral ON avaliacoes_riscos(id_avaliacao);
+
+-- Índices para pesquisas frequentes
+CREATE INDEX idx_data_avaliacao ON avaliacoes_gerais(data_avaliacao);
+CREATE INDEX idx_status_avaliacao ON avaliacoes_gerais(status);
+CREATE INDEX idx_leito_status ON leitos(status);
+CREATE INDEX idx_resultados_exame ON resultados_exames(id_exame, nome_exame);
+CREATE INDEX idx_problemas_sistema ON problemas(tipo_sistema, prioridade);
+CREATE INDEX idx_pendencias_status ON pendencias(status, prazo);
+
+-- Índices compostos específicos
+CREATE INDEX idx_avaliacao_data ON avaliacoes_gerais(id_paciente, data_avaliacao);
+CREATE INDEX idx_pendencias_paciente_status ON pendencias(id_paciente, status, prazo);
+CREATE INDEX idx_problemas_sistema_prioridade ON problemas(tipo_sistema, prioridade, status);
+
+-- Índices para textos
+CREATE INDEX idx_diagnostico_texto ON diagnosticos(diagnostico_principal);
+CREATE INDEX idx_problema_texto ON problemas(problema);
+
+-- Índices para medicamentos
+CREATE INDEX idx_medicamentos_tipo ON medicamentos(tipo);
+CREATE INDEX idx_medicamentos_ativo ON medicamentos(ativo) WHERE ativo = true;
