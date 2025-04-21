@@ -4,6 +4,7 @@ import { useLocation } from 'wouter';
 import { Bed } from '@/types';
 import { cn } from '@/lib/utils';
 import { Activity, Heart, Stethoscope, Brain, Plus, User, Calendar } from 'lucide-react';
+import { FaLungs } from 'react-icons/fa';
 import { Button } from '@/components/ui/button';
 
 interface BedCardProps {
@@ -49,7 +50,7 @@ export function BedCard({ bed }: BedCardProps) {
     const diagnosis = bed.patient.mainDiagnosis.toLowerCase();
 
     if (diagnosis.includes('pneumonia') || diagnosis.includes('pulm')) {
-      return <Activity className="h-5 w-5 text-blue-400" />;
+      return <FaLungs className="h-5 w-5 text-blue-400" />;
     } else if (diagnosis.includes('card') || diagnosis.includes('coração')) {
       return <Heart className="h-5 w-5 text-red-500" />;
     } else if (diagnosis.includes('avc') || diagnosis.includes('cerebr')) {
