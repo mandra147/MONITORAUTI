@@ -180,6 +180,23 @@
   .border-available {
     @apply border-blue-500 dark:border-blue-600;
   }
+  
+  /* Cores de status */
+  .bg-critical {
+    @apply bg-red-500 dark:bg-red-600;
+  }
+  
+  .bg-attention {
+    @apply bg-amber-500 dark:bg-amber-600;
+  }
+  
+  .bg-stable {
+    @apply bg-green-500 dark:bg-green-600;
+  }
+  
+  .bg-available {
+    @apply bg-blue-500 dark:bg-blue-600;
+  }
 
   /* Classes para responsividade */
   .responsive-container {

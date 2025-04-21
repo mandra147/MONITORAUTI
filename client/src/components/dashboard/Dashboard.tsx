@@ -108,10 +108,12 @@ export function Dashboard() {
   // Função para gerar dados fictícios de 10 leitos (501-510)
   const generateMockBeds = () => {
     const statuses = ['critical', 'attention', 'stable', 'available'];
+    const diagnoses = ['Pneumonia', 'Sepse', 'Insuficiência Cardíaca', 'AVC', 'Politrauma'];
     const mockBeds = [];
     
     for (let i = 1; i <= 10; i++) {
-      const bedNumber = `50${i}`;
+      // Garantir que os números dos leitos são de 501 a 510
+      const bedNumber = i < 10 ? `50${i}` : '510';
       const status = statuses[Math.floor(Math.random() * 4)]; // Status aleatório
       const isOccupied = status !== 'available';
       
@@ -126,7 +128,7 @@ export function Dashboard() {
           name: `Paciente ${i}`,
           age: Math.floor(Math.random() * 50) + 20, // Idade entre 20-70
           gender: Math.random() > 0.5 ? 'male' : 'female',
-          mainDiagnosis: ['Pneumonia', 'Sepse', 'Insuficiência Cardíaca', 'AVC', 'Politrauma'][Math.floor(Math.random() * 5)],
+          mainDiagnosis: diagnoses[Math.floor(Math.random() * diagnoses.length)],
           daysHospitalized: Math.floor(Math.random() * 20) + 1,
           sapsScore: status === 'critical' ? 70 : status === 'attention' ? 50 : 30
         } : null
@@ -311,31 +313,45 @@ export function Dashboard() {
       </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          {Array(10).fill(0).map((_, i) => (
-            <div key={i} className="bg-card/50 rounded-md shadow-sm border border-border/50 h-[220px] animate-pulse">
-              <div className="p-4 space-y-3">
-                <div className="h-4 bg-muted rounded w-3/4"></div>
-                <div className="h-4 bg-muted rounded w-1/2"></div>
-                <div className="h-4 bg-muted rounded w-5/6"></div>
-                <div className="h-4 bg-muted rounded w-2/3"></div>
+        <div className="space-y-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {Array(5).fill(0).map((_, i) => (
+              <div key={i} className="bg-card/50 rounded-md shadow-sm border border-border/50 h-[220px] animate-pulse">
+                <div className="p-4 space-y-3">
+                  <div className="h-4 bg-muted rounded w-3/4"></div>
+                  <div className="h-4 bg-muted rounded w-1/2"></div>
+                  <div className="h-4 bg-muted rounded w-5/6"></div>
+                  <div className="h-4 bg-muted rounded w-2/3"></div>
+                </div>
               </div>
-            </div>
-          ))}
+            ))}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {Array(5).fill(0).map((_, i) => (
+              <div key={i+5} className="bg-card/50 rounded-md shadow-sm border border-border/50 h-[220px] animate-pulse">
+                <div className="p-4 space-y-3">
+                  <div className="h-4 bg-muted rounded w-3/4"></div>
+                  <div className="h-4 bg-muted rounded w-1/2"></div>
+                  <div className="h-4 bg-muted rounded w-5/6"></div>
+                  <div className="h-4 bg-muted rounded w-2/3"></div>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       ) : (
-        <>
+        <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {filteredBeds.slice(0, 5).map((bed: any) => (
               <BedCard key={bed.id} bed={bed} />
             ))}
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {filteredBeds.slice(5, 10).map((bed: any) => (
               <BedCard key={bed.id} bed={bed} />
             ))}
           </div>
-        </>
+        </div>
       )}
     </div>
   );
