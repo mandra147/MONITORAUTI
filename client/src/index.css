@@ -178,7 +178,7 @@
   }
 
   .border-available {
-    @apply border-blue-500 dark:bg-blue-600;
+    @apply border-blue-500 dark:border-blue-600;
   }
 
   /* Classes para responsividade */
