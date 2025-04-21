@@ -33,25 +33,25 @@
   :root {
     --background: 0 0% 100%;
     --foreground: 222 47% 11%;
-    
+
     --card: 0 0% 100%;
     --card-foreground: 222 47% 11%;
-    
+
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
-    
+
     --primary: 217 91% 60%;
     --primary-foreground: 210 40% 98%;
-    
+
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222 47% 11%;
-    
+
     --muted: 210 40% 96.1%;
     --muted-foreground: 215 16% 47%;
-    
+
     --accent: 210 40% 96.1%;
     --accent-foreground: 222 47% 11%;
-    
+
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
@@ -59,30 +59,30 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 217 91% 60%;
   }
-  
+
   /* Dark theme customization - matches the screenshots */
   .dark {
     --background: 222 47% 11%;
     --foreground: 210 40% 98%;
-    
+
     --card: 219 47% 15%;
     --card-foreground: 210 40% 98%;
-    
+
     --popover: 222 47% 11%;
     --popover-foreground: 210 40% 98%;
-    
+
     --primary: 217 91% 60%;
     --primary-foreground: 210 40% 98%;
-    
+
     --secondary: 217 32% 17%;
     --secondary-foreground: 210 40% 98%;
-    
+
     --muted: 217 32% 17%;
     --muted-foreground: 215 20% 65%;
-    
+
     --accent: 217 32% 17%;
     --accent-foreground: 210 40% 98%;
-    
+
     --destructive: 0 62% 50%;
     --destructive-foreground: 210 40% 98%;
 
@@ -97,54 +97,103 @@
   .status-critical {
     @apply bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-300 border-red-300 dark:border-red-600;
   }
-  
+
   .status-attention {
     @apply bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300 border-amber-300 dark:border-amber-600;
   }
-  
+
   .status-stable {
     @apply bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-300 border-green-300 dark:border-green-600;
   }
-  
+
   .status-available {
     @apply bg-blue-50 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300 border-blue-200 dark:border-blue-800;
   }
-  
+
   .animate-fade-in {
     animation: fadeIn 0.5s ease forwards;
   }
-  
+
   @keyframes fadeIn {
     from { opacity: 0; }
     to { opacity: 1; }
   }
-  
+
   /* Classes de interação */
   .hover-lift {
     @apply transition-all duration-200 hover:-translate-y-2 hover:shadow-[0_8px_16px_rgba(0,0,0,0.4)];
   }
-  
+
   .hover-glow {
     @apply transition-all duration-150 hover:brightness-110 hover:scale-[1.02];
   }
-  
+
   .hover-menu {
     @apply transition-all duration-150 hover:bg-[rgba(255,255,255,0.05)] hover:text-white;
   }
-  
+
+  /* Cores status dos leitos */
+  .text-critical {
+    @apply text-red-500 dark:text-red-400;
+  }
+
+  .text-attention {
+    @apply text-amber-500 dark:text-amber-400;
+  }
+
+  .text-stable {
+    @apply text-green-500 dark:text-green-400;
+  }
+
+  .text-available {
+    @apply text-blue-500 dark:text-blue-400;
+  }
+
+  .bg-critical {
+    @apply bg-red-500 dark:bg-red-600;
+  }
+
+  .bg-attention {
+    @apply bg-amber-500 dark:bg-amber-600;
+  }
+
+  .bg-stable {
+    @apply bg-green-500 dark:bg-green-600;
+  }
+
+  .bg-available {
+    @apply bg-blue-500 dark:bg-blue-600;
+  }
+
+  .border-critical {
+    @apply border-red-500 dark:border-red-600;
+  }
+
+  .border-attention {
+    @apply border-amber-500 dark:border-amber-600;
+  }
+
+  .border-stable {
+    @apply border-green-500 dark:border-green-600;
+  }
+
+  .border-available {
+    @apply border-blue-500 dark:bg-blue-600;
+  }
+
   /* Classes para responsividade */
   .responsive-container {
     @apply px-2 sm:px-4 md:px-6 py-2 sm:py-4 md:py-6;
   }
-  
+
   .responsive-grid {
     @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6;
   }
-  
+
   .responsive-text {
     @apply text-sm sm:text-base;
   }
-  
+
   .responsive-heading {
     @apply text-xl sm:text-2xl md:text-3xl font-bold;
   }

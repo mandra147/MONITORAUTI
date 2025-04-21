@@ -105,10 +105,51 @@ export function Dashboard() {
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
 
-  const { data: beds = [], isLoading, error } = useQuery({
+  // Função para gerar dados fictícios de 10 leitos (501-510)
+  const generateMockBeds = () => {
+    const statuses = ['critical', 'attention', 'stable', 'available'];
+    const mockBeds = [];
+    
+    for (let i = 1; i <= 10; i++) {
+      const bedNumber = `50${i}`;
+      const status = statuses[Math.floor(Math.random() * 4)]; // Status aleatório
+      const isOccupied = status !== 'available';
+      
+      mockBeds.push({
+        id: i.toString(),
+        bedNumber,
+        status,
+        wing: i <= 5 ? 'A' : 'B',
+        floor: 5,
+        patient: isOccupied ? {
+          id: `patient-${i}`,
+          name: `Paciente ${i}`,
+          age: Math.floor(Math.random() * 50) + 20, // Idade entre 20-70
+          gender: Math.random() > 0.5 ? 'male' : 'female',
+          mainDiagnosis: ['Pneumonia', 'Sepse', 'Insuficiência Cardíaca', 'AVC', 'Politrauma'][Math.floor(Math.random() * 5)],
+          daysHospitalized: Math.floor(Math.random() * 20) + 1,
+          sapsScore: status === 'critical' ? 70 : status === 'attention' ? 50 : 30
+        } : null
+      });
+    }
+    
+    return mockBeds;
+  };
+
+  // Usar dados mockados se não existirem dados reais
+  const { data: apiData = [], isLoading, error } = useQuery({
     queryKey: ['/api/dashboard'],
     refetchInterval: 30000, // Refetch every 30 seconds
   });
+  
+  // Se tivermos menos de 10 leitos, complementar com dados mockados
+  const beds = useMemo(() => {
+    const bedsArray = Array.isArray(apiData) ? apiData : [];
+    if (bedsArray.length >= 10) return bedsArray.slice(0, 10); // Limitar a 10 leitos
+    
+    const mockBeds = generateMockBeds();
+    return [...bedsArray, ...mockBeds.slice(bedsArray.length)].slice(0, 10);
+  }, [apiData]);
 
   // Ensure beds is always an array, even if API returns an object or undefined
   const bedsArray = Array.isArray(beds) ? beds : [];
@@ -249,11 +290,30 @@ export function Dashboard() {
           </SelectContent>
         </Select>
       </div>
+      
+      <div className="mb-4 flex flex-wrap gap-2">
+        <div className="flex items-center gap-2">
+          <span className="inline-block w-3 h-3 rounded-full bg-critical"></span>
+          <span className="text-xs">Crítico</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="inline-block w-3 h-3 rounded-full bg-attention"></span>
+          <span className="text-xs">Atenção</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="inline-block w-3 h-3 rounded-full bg-stable"></span>
+          <span className="text-xs">Estável</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="inline-block w-3 h-3 rounded-full bg-available"></span>
+          <span className="text-xs">Disponível</span>
+        </div>
+      </div>
 
       {isLoading ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {Array(8).fill(0).map((_, i) => (
-            <div key={i} className="bg-card/50 rounded-md shadow-sm border border-border/50 h-[140px] animate-pulse">
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+          {Array(10).fill(0).map((_, i) => (
+            <div key={i} className="bg-card/50 rounded-md shadow-sm border border-border/50 h-[220px] animate-pulse">
               <div className="p-4 space-y-3">
                 <div className="h-4 bg-muted rounded w-3/4"></div>
                 <div className="h-4 bg-muted rounded w-1/2"></div>
@@ -264,11 +324,18 @@ export function Dashboard() {
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 2xl:grid-cols-4 gap-4">
-          {filteredBeds.map((bed: any) => (
-            <BedCard key={bed.id} bed={bed} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+            {filteredBeds.slice(0, 5).map((bed: any) => (
+              <BedCard key={bed.id} bed={bed} />
+            ))}
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mt-4">
+            {filteredBeds.slice(5, 10).map((bed: any) => (
+              <BedCard key={bed.id} bed={bed} />
+            ))}
+          </div>
+        </>
       )}
     </div>
   );
