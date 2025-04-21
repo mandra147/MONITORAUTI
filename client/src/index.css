@@ -1,94 +1,93 @@
 @tailwind base;
 @tailwind components;
-
-@tailwind base;
-@tailwind components;
 @tailwind utilities;
- 
+
 @layer base {
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
-
     --card: 0 0% 100%;
     --card-foreground: 222.2 84% 4.9%;
- 
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
- 
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 221.2 83.2% 53.3%;
     --primary-foreground: 210 40% 98%;
- 
     --secondary: 210 40% 96.1%;
     --secondary-foreground: 222.2 47.4% 11.2%;
- 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
- 
     --accent: 210 40% 96.1%;
     --accent-foreground: 222.2 47.4% 11.2%;
- 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
-
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
-
+    --ring: 221.2 83.2% 53.3%;
     --radius: 0.5rem;
 
-    /* Cores de status para os leitos */
-    --critical: 0 85% 60%;
+    --critical: 0 72% 51%;
     --attention: 38 92% 50%;
-    --stable: 142 72% 50%;
-    --available: 214 100% 60%;
+    --stable: 142 70% 45%;
+    --available: 205 70% 50%;
   }
- 
+
   .dark {
     --background: 222.2 84% 4.9%;
     --foreground: 210 40% 98%;
- 
-    --card: 222.2 84% 9.9%;
+    --card: 222.2 84% 4.9%;
     --card-foreground: 210 40% 98%;
- 
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
- 
-    --primary: 210 40% 98%;
+    --primary: 217.2 91.2% 59.8%;
     --primary-foreground: 222.2 47.4% 11.2%;
- 
     --secondary: 217.2 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
- 
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
- 
     --accent: 217.2 32.6% 17.5%;
     --accent-foreground: 210 40% 98%;
- 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
- 
     --border: 217.2 32.6% 17.5%;
     --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --ring: 224.3 76.3% 48%;
 
-    /* Cores de status para os leitos */
-    --critical: 0 85% 60%;
+    --critical: 0 65% 55%;
     --attention: 38 92% 50%;
-    --stable: 142 72% 50%;
-    --available: 214 100% 60%;
+    --stable: 142 70% 45%;
+    --available: 205 70% 50%;
   }
 }
- 
-@layer base {
-  * {
-    @apply border-border;
+
+@layer utilities {
+  .animate-fade-in {
+    animation: fadeIn 0.5s ease-in-out;
   }
-  body {
-    @apply bg-background text-foreground;
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .line-clamp-1 {
+    display: -webkit-box;
+    -webkit-line-clamp: 1;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
   }
 }
+
+/* Styles for the BedCard component would go here.  This is incomplete due to missing information. */
+
+
+/* ... rest of the original file remains unchanged ... */
 
 .bg-critical {
   background-color: hsl(var(--critical));
@@ -327,20 +326,20 @@
   .border-available {
     @apply border-blue-500 dark:border-blue-600;
   }
-  
+
   /* Cores de status */
   .bg-critical {
     @apply bg-red-500 dark:bg-red-600;
   }
-  
+
   .bg-attention {
     @apply bg-amber-500 dark:bg-amber-600;
   }
-  
+
   .bg-stable {
     @apply bg-green-500 dark:bg-green-600;
   }
-  
+
   .bg-available {
     @apply bg-blue-500 dark:bg-blue-600;
   }

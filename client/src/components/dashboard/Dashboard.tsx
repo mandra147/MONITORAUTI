@@ -31,8 +31,8 @@ export function Dashboard() {
         id: i.toString(),
         bedNumber,
         status,
-        wing: 'Norte',
-        floor: 1,
+        wing: '',
+        floor: 0,
         patient: isOccupied ? {
           id: `patient-${i}`,
           name: `Paciente ${i}`,
