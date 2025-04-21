@@ -3,98 +3,9 @@ import { useQuery } from '@tanstack/react-query';
 import { Search } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { BedCard } from './BedCard';
 import { BedStatus } from '@/types';
 import { useTheme } from 'next-themes';
-
-// Este é o novo componente BedCard, seguindo o design de referência
-function BedCard({ bed }: { bed: any }) {
-  const getStatusClass = (status: string) => {
-    switch (status) {
-      case 'critical':
-        return 'bg-card dark:bg-card border-t-4 border-red-500';
-      case 'attention':
-        return 'bg-card dark:bg-card border-t-4 border-amber-500';
-      case 'stable':
-        return 'bg-card dark:bg-card border-t-4 border-green-500';
-      case 'available':
-        return 'bg-card dark:bg-card border-t-4 border-blue-300 dark:border-blue-500';
-      default:
-        return 'bg-card dark:bg-card border-t-4 border-muted';
-    }
-  };
-
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'critical':
-        return 'Crítico';
-      case 'attention':
-        return 'Atenção';
-      case 'stable':
-        return 'Estável';
-      case 'available':
-        return 'Vago';
-      default:
-        return 'Desconhecido';
-    }
-  };
-
-  // Se o leito estiver disponível, mostramos uma mensagem simplificada
-  if (!bed.patient || bed.status === 'available') {
-    return (
-      <div className={`rounded-md shadow-sm ${getStatusClass(bed.status)}`}>
-        <div className="p-4">
-          <div className="flex justify-between items-start mb-2">
-            <h3 className="font-semibold">Leito {bed.bedNumber}</h3>
-            <span className="text-xs text-muted-foreground">
-              Ala {bed.wing} • {bed.floor}º andar
-            </span>
-          </div>
-          <div className="flex flex-col items-center justify-center py-6 text-center">
-            <span className="text-sm font-medium text-muted-foreground mb-2">Leito Disponível</span>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className={`rounded-md shadow-sm ${getStatusClass(bed.status)}`}>
-      <div className="p-4">
-        <div className="flex justify-between items-start mb-2">
-          <h3 className="font-semibold">Leito {bed.bedNumber}</h3>
-          <span className="text-xs text-muted-foreground">
-            Ala {bed.wing} • {bed.floor}º andar
-          </span>
-        </div>
-
-        <div className="pt-1">
-          <h4 className="font-medium">{bed.patient.name}</h4>
-          <div className="flex items-center text-xs text-muted-foreground mt-1 space-x-1">
-            <span>{bed.patient.age} anos</span>
-            <span>•</span>
-            <span>{bed.patient.mainDiagnosis}</span>
-          </div>
-        </div>
-
-        <div className="flex justify-between items-center mt-4 text-xs">
-          <div className="flex flex-col">
-            <span className="text-muted-foreground">Tempo de internação</span>
-            <span className="font-medium">{bed.patient.daysHospitalized || 0} dias</span>
-          </div>
-
-          <div className="flex flex-col text-right">
-            <span className="text-muted-foreground">Gravidade</span>
-            <span className="font-medium">
-              {bed.status === 'critical' ? 'Alta' : 
-               bed.status === 'attention' ? 'Moderada' : 
-               bed.status === 'stable' ? 'Baixa' : 'Normal'}
-            </span>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
 
 export function Dashboard() {
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -110,12 +21,12 @@ export function Dashboard() {
     const statuses = ['critical', 'attention', 'stable', 'available'];
     const diagnoses = ['Pneumonia', 'Sepse', 'Insuficiência Cardíaca', 'AVC', 'Politrauma'];
     const mockBeds = [];
-    
+
     for (let i = 1; i <= 10; i++) {
-      const bedNumber = i < 10 ? `50${i}` : '510';
+      const bedNumber = 500 + i;
       const status = statuses[Math.floor(Math.random() * 4)]; // Status aleatório
       const isOccupied = status !== 'available';
-      
+
       mockBeds.push({
         id: i.toString(),
         bedNumber,
@@ -133,7 +44,7 @@ export function Dashboard() {
         } : null
       });
     }
-    
+
     return mockBeds;
   };
 
@@ -142,12 +53,12 @@ export function Dashboard() {
     queryKey: ['/api/dashboard'],
     refetchInterval: 30000, // Refetch every 30 seconds
   });
-  
+
   // Se tivermos menos de 10 leitos, complementar com dados mockados
   const beds = useMemo(() => {
     const bedsArray = Array.isArray(apiData) ? apiData : [];
     if (bedsArray.length >= 10) return bedsArray.slice(0, 10); // Limitar a 10 leitos
-    
+
     const mockBeds = generateMockBeds();
     return [...bedsArray, ...mockBeds.slice(bedsArray.length)].slice(0, 10);
   }, [apiData]);
@@ -167,7 +78,7 @@ export function Dashboard() {
       // Filter by search term (bed number or patient name)
       if (searchTerm) {
         const searchTermLower = searchTerm.toLowerCase();
-        const bedNumberMatch = bed.bedNumber.toLowerCase().includes(searchTermLower);
+        const bedNumberMatch = bed.bedNumber.toString().toLowerCase().includes(searchTermLower);
         const patientNameMatch = bed.patient && bed.patient.name 
           ? bed.patient.name.toLowerCase().includes(searchTermLower)
           : false;
@@ -291,7 +202,7 @@ export function Dashboard() {
           </SelectContent>
         </Select>
       </div>
-      
+
       <div className="mb-4 flex flex-wrap gap-2">
         <div className="flex items-center gap-2">
           <span className="inline-block w-3 h-3 rounded-full bg-critical"></span>
@@ -312,10 +223,10 @@ export function Dashboard() {
       </div>
 
       {isLoading ? (
-        <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           {/* Estado de carregamento - skeletons */}
           {Array(10).fill(0).map((_, i) => (
-            <div key={i} className="bg-gray-800 rounded-lg border-t-4 border-gray-600 mb-4 h-[150px] animate-pulse">
+            <div key={i} className="bg-card rounded-lg border-t-4 border-gray-600 h-[180px] animate-pulse">
               <div className="p-4 space-y-3">
                 <div className="h-4 bg-gray-700 rounded w-3/4"></div>
                 <div className="h-4 bg-gray-700 rounded w-1/2"></div>
@@ -326,8 +237,8 @@ export function Dashboard() {
         </div>
       ) : (
         <div>
-          {/* Exibir leitos em formato de lista (1 coluna em mobile, 2 colunas em telas maiores) */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Layout dos leitos em duas linhas de 5 */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
             {filteredBeds.map((bed: any) => (
               <BedCard key={bed.id} bed={bed} />
             ))}
