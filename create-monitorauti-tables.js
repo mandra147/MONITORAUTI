@@ -1,8 +1,12 @@
 // Script para criação das tabelas do MonitoraUTI
 import fs from 'fs';
-import { Pool } from '@neondatabase/serverless';
+import { Pool, neonConfig } from '@neondatabase/serverless';
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
+import ws from 'ws';
+
+// Configurando o WebSocket para o Neon Database
+neonConfig.webSocketConstructor = ws;
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);

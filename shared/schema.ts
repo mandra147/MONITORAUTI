@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, pgEnum } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, pgEnum, numeric, date, varchar, time } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
@@ -8,6 +8,24 @@ export const userRoleEnum = pgEnum('user_role', ['admin', 'doctor', 'nurse']);
 export const bedStatusEnum = pgEnum('bed_status', ['critical', 'attention', 'stable', 'available']);
 
 export const genderEnum = pgEnum('gender', ['male', 'female', 'other']);
+
+// Enums para status de leito conforme banco criado
+export const leitoStatusEnum = pgEnum('leito_status', ['ocupado', 'livre', 'manutencao', 'reservado']);
+
+// Enum para status de pacientes
+export const pacienteStatusEnum = pgEnum('paciente_status', ['ativo', 'alta', 'transferido']);
+
+// Enum para sexo do paciente
+export const sexoPacienteEnum = pgEnum('sexo_paciente', ['masculino', 'feminino']);
+
+// Enum para status de avaliação
+export const statusAvaliacaoEnum = pgEnum('status_avaliacao', ['em_andamento', 'concluida']);
+
+// Enum para tipo de evolução
+export const tipoEvolucaoEnum = pgEnum('tipo_evolucao', ['medica', 'enfermagem', 'fisioterapia', 'nutricao', 'psicologia', 'fonoaudiologia', 'outro']);
+
+// Enum para status dos sistemas
+export const statusSistemaEnum = pgEnum('status_sistema', ['normal', 'alterado', 'grave', 'nao_avaliado']);
 
 // User schema
 export const users = pgTable("users", {
@@ -21,16 +39,36 @@ export const users = pgTable("users", {
   lastLogin: timestamp("last_login"),
 });
 
-// Beds schema
-export const beds = pgTable("beds", {
-  id: serial("id").primaryKey(),
-  bedNumber: text("bed_number").notNull().unique(),
-  wing: text("wing").notNull(),
-  floor: integer("floor").notNull(),
-  status: bedStatusEnum("status").notNull().default('available'),
+// Tabela de pacientes conforme o esquema criado no PostgreSQL
+export const pacientes = pgTable("pacientes", {
+  id_paciente: serial("id_paciente").primaryKey(),
+  nome: varchar("nome", { length: 255 }).notNull(),
+  data_nascimento: date("data_nascimento"),
+  idade_paciente: integer("idade_paciente"),
+  peso_paciente: numeric("peso_paciente"),
+  altura_paciente_cm: integer("altura_paciente_cm"),
+  sexo_paciente: sexoPacienteEnum("sexo_paciente"),
+  data_admissao: timestamp("data_admissao", { withTimezone: true }).notNull(),
+  status: pacienteStatusEnum("status"),
+  ventilacao_mecanica: boolean("ventilacao_mecanica").default(false),
+  comunicativo: boolean("comunicativo").default(true),
+  foto: text("foto"), // BYTEA como texto base64
+  numero_prontuario: varchar("numero_prontuario", { length: 50 }),
+  observacoes: text("observacoes")
 });
 
-// Patients schema
+// Tabela de leitos conforme o esquema criado no PostgreSQL
+export const leitos = pgTable("leitos", {
+  id_leito: serial("id_leito").primaryKey(),
+  numero_leito: varchar("numero_leito", { length: 20 }).notNull(),
+  id_paciente: integer("id_paciente").references(() => pacientes.id_paciente),
+  status: leitoStatusEnum("status").default('livre'),
+  id_responsavel: text("id_responsavel"), // UUID como texto
+  data_ultima_ocupacao: timestamp("data_ultima_ocupacao"),
+  observacoes: text("observacoes")
+});
+
+// Mantenho a tabela patients para compatibilidade com código existente
 export const patients = pgTable("patients", {
   id: serial("id").primaryKey(),
   name: text("name").notNull(),
@@ -47,6 +85,15 @@ export const patients = pgTable("patients", {
   active: boolean("active").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Compatibilidade: ainda mantenho a tabela beds original para não quebrar código existente
+export const beds = pgTable("beds", {
+  id: serial("id").primaryKey(),
+  bedNumber: text("bed_number").notNull().unique(),
+  wing: text("wing").notNull(),
+  floor: integer("floor").notNull(),
+  status: bedStatusEnum("status").notNull().default('available'),
 });
 
 // Sessions schema
@@ -80,7 +127,7 @@ export const patientPending = pgTable("patient_pending", {
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
-// Data insert schemas
+// Data insert schemas para schema original 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
@@ -128,6 +175,29 @@ export const insertPatientPendingSchema = createInsertSchema(patientPending).pic
   isCompleted: true,
 });
 
+// Schemas para novas tabelas do MonitoraUTI
+export const insertPacienteSchema = createInsertSchema(pacientes).pick({
+  nome: true,
+  data_nascimento: true,
+  idade_paciente: true,
+  peso_paciente: true,
+  altura_paciente_cm: true,
+  sexo_paciente: true,
+  data_admissao: true,
+  status: true,
+  ventilacao_mecanica: true,
+  comunicativo: true,
+  numero_prontuario: true,
+  observacoes: true,
+});
+
+export const insertLeitoSchema = createInsertSchema(leitos).pick({
+  numero_leito: true,
+  id_paciente: true,
+  status: true,
+  observacoes: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -146,6 +216,13 @@ export type InsertPatientProblem = z.infer<typeof insertPatientProblemSchema>;
 
 export type PatientPending = typeof patientPending.$inferSelect;
 export type InsertPatientPending = z.infer<typeof insertPatientPendingSchema>;
+
+// Tipos para novas tabelas do MonitoraUTI
+export type Paciente = typeof pacientes.$inferSelect;
+export type InsertPaciente = z.infer<typeof insertPacienteSchema>;
+
+export type Leito = typeof leitos.$inferSelect;
+export type InsertLeito = z.infer<typeof insertLeitoSchema>;
 
 // Login schema
 export const loginSchema = z.object({
