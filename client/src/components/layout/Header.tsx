@@ -1,5 +1,5 @@
 import { useState, useEffect, useContext } from 'react';
-import { Bell, Menu } from 'lucide-react';
+import { Bell, Menu, Sun, Moon } from 'lucide-react'; // Added Moon and Sun icons
 import { AuthContext } from '@/context/AuthProvider';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -15,12 +15,7 @@ export function Header({ toggleSidebar }: HeaderProps) {
   const { user } = useContext(AuthContext);
   const { theme, setTheme } = useTheme();
 
-  const toggleTheme = () => {
-    setTheme(theme === 'dark' ? 'light' : 'dark');
-  };
-
   useEffect(() => {
-    // Update time every second
     const updateTime = () => {
       const now = new Date();
       setCurrentTime(
@@ -31,14 +26,8 @@ export function Header({ toggleSidebar }: HeaderProps) {
         })
       );
     };
-
-    // Initial update
     updateTime();
-
-    // Set interval for updates
     const intervalId = setInterval(updateTime, 1000);
-
-    // Clean up interval
     return () => clearInterval(intervalId);
   }, []);
 
@@ -67,17 +56,9 @@ export function Header({ toggleSidebar }: HeaderProps) {
             {currentTime}
           </div>
 
-          <button 
-            onClick={toggleTheme} 
-            className="p-2 rounded-full hover:bg-muted transition-colors"
-            aria-label="Alternar tema"
-          >
-            {theme === 'dark' ? (
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg>
-            ) : (
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z"/></svg>
-            )}
-          </button>
+          <button onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')} className="p-2 rounded-full hover:bg-muted transition-colors" aria-label="Alternar tema">
+            {theme === 'dark' ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
+          </button> {/* Replaced existing theme toggle with a simpler one using next-themes */}
 
           <div className="relative">
             <Button variant="ghost" size="icon" className="text-muted-foreground rounded-full">

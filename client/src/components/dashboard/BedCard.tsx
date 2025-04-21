@@ -29,17 +29,17 @@ export function BedCard({ bed }: BedCardProps) {
   }, [bed.status]);
 
   const getStatusColor = useCallback(() => {
+    if (!bed.patient) return 'bg-blue-500'; // Available - Blue as shown in your screenshot
+
     switch (bed.status) {
       case 'critical':
-        return 'bg-critical';
+        return 'bg-red-500';
       case 'attention':
-        return 'bg-attention';
+        return 'bg-orange-500';
       case 'stable':
-        return 'bg-stable';
-      case 'available':
-        return 'bg-available';
+        return 'bg-green-500';
       default:
-        return 'bg-gray-300';
+        return 'bg-gray-500';
     }
   }, [bed.status]);
 
@@ -89,7 +89,7 @@ export function BedCard({ bed }: BedCardProps) {
   return (
     <div
       className={cn(
-        "relative backdrop-blur-sm bg-card/60 rounded-xl shadow-lg overflow-hidden h-full",
+        "relative backdrop-blur-sm bg-card/60 rounded-xl shadow-lg overflow-hidden h-full border dark:border-gray-700",
         "transition-all duration-300 hover:shadow-xl hover:-translate-y-1",
         bed.status === 'available' ? 'border border-gray-200 dark:border-gray-800' : `border-l-4 ${getBorderColor()}`
       )}
@@ -110,7 +110,7 @@ export function BedCard({ bed }: BedCardProps) {
             <Button 
               onClick={handleAddPatient}
               variant="default"
-              className="w-full justify-center gap-2 py-5 rounded-lg shadow-sm hover:shadow-md transition-all"
+              className="w-full justify-center gap-2 py-5 rounded-lg shadow-sm hover:shadow-md transition-all bg-blue-500 hover:bg-blue-600 text-white"
             >
               <Plus className="h-4 w-4" />
               Adicionar Paciente
