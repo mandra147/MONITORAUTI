@@ -30,28 +30,9 @@ export function Sidebar({ isMobileSidebarOpen, closeMobileSidebar }: SidebarProp
     return location === path || (path !== '/dashboard' && location.startsWith(path));
   };
 
-  // Menus seguindo exatamente as imagens de referência
-  const menuItems = [
-    {
-      items: [
-        { name: 'Dashboard', path: '/dashboard', icon: <LayoutDashboard size={18} /> },
-        { name: 'Pacientes', path: '/patients', icon: <Users size={18} /> },
-        { name: 'Agenda', path: '/agenda', icon: <Calendar size={18} /> },
-        { name: 'Rounds', path: '/rounds', icon: <Activity size={18} /> },
-      ],
-    },
-    {
-      items: [
-        { name: 'Relatórios', path: '/reports', icon: <FileText size={18} /> },
-        { name: 'Perfil', path: '/profile', icon: <User size={18} /> },
-        { name: 'Configurações', path: '/settings', icon: <Settings size={18} /> },
-      ],
-    }
-  ];
-
   return (
     <>
-      {/* Overlay for mobile */}
+      {/* Overlay para móvel */}
       <div 
         className={cn(
           "fixed inset-0 z-30 bg-background/80 backdrop-blur-sm md:hidden",
@@ -60,52 +41,103 @@ export function Sidebar({ isMobileSidebarOpen, closeMobileSidebar }: SidebarProp
         onClick={closeMobileSidebar}
       />
 
-      {/* Sidebar component */}
-      <aside className="sidebar">
-        {/* Logo */}
-        <div className="sidebar-section border-b border-white/10">
-          <div className="sidebar-logo">MONITORAUTI</div>
-          <div className="sidebar-subtitle">Sistema Avançado de Monitoramento</div>
+      {/* Sidebar component - exatamente como na referência */}
+      <aside className="fixed top-0 left-0 z-40 h-screen w-60 transform -translate-x-full md:translate-x-0 transition-transform bg-[#1a2036] text-white border-r-0 shadow-lg">
+        {/* Cabeçalho com logo */}
+        <div className="p-4 border-b border-white/10">
+          <div className="text-xl font-bold">MONITORAUTI</div>
+          <div className="text-xs text-white/60">Sistema Avançado de Monitoramento</div>
         </div>
 
-        {/* Navigation Menu - exactly matching reference images */}
-        <div className="flex flex-col h-[calc(100%-64px)]">
+        {/* Menu de navegação */}
+        <div className="flex flex-col h-[calc(100%-12rem)]">
           <div className="flex-1 py-4">
+            {/* Seção Menu */}
             <div className="mb-6">
-              <div className="sidebar-heading">Menu</div>
+              <div className="px-4 text-xs uppercase tracking-wider text-white/50 font-medium mb-2">Menu</div>
               <nav className="space-y-1">
-                {menuItems[0].items.map((item) => (
-                  <Link
-                    key={item.path}
-                    href={item.path}
-                    className={cn(
-                      "sidebar-link",
-                      isActive(item.path) && "sidebar-link-active"
-                    )}
-                  >
-                    {item.icon}
-                    <span>{item.name}</span>
-                  </Link>
-                ))}
+                <Link
+                  href="/dashboard"
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-white/80 hover:bg-[#242b44] rounded-md transition-colors",
+                    isActive("/dashboard") && "bg-[#2e3652] text-[#3b82f6]"
+                  )}
+                >
+                  <LayoutDashboard className="h-5 w-5" />
+                  <span>Dashboard</span>
+                </Link>
+                
+                <Link
+                  href="/patients"
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-white/80 hover:bg-[#242b44] rounded-md transition-colors",
+                    isActive("/patients") && "bg-[#2e3652] text-[#3b82f6]"
+                  )}
+                >
+                  <Users className="h-5 w-5" />
+                  <span>Pacientes</span>
+                </Link>
+                
+                <Link
+                  href="/agenda"
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-white/80 hover:bg-[#242b44] rounded-md transition-colors",
+                    isActive("/agenda") && "bg-[#2e3652] text-[#3b82f6]"
+                  )}
+                >
+                  <Calendar className="h-5 w-5" />
+                  <span>Agenda</span>
+                </Link>
+                
+                <Link
+                  href="/rounds"
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-white/80 hover:bg-[#242b44] rounded-md transition-colors",
+                    isActive("/rounds") && "bg-[#2e3652] text-[#3b82f6]"
+                  )}
+                >
+                  <Activity className="h-5 w-5" />
+                  <span>Rounds</span>
+                </Link>
               </nav>
             </div>
 
+            {/* Seção Administração */}
             <div>
-              <div className="sidebar-heading">Administração</div>
+              <div className="px-4 text-xs uppercase tracking-wider text-white/50 font-medium mb-2">Administração</div>
               <nav className="space-y-1">
-                {menuItems[1].items.map((item) => (
-                  <Link
-                    key={item.path}
-                    href={item.path}
-                    className={cn(
-                      "sidebar-link",
-                      isActive(item.path) && "sidebar-link-active"
-                    )}
-                  >
-                    {item.icon}
-                    <span>{item.name}</span>
-                  </Link>
-                ))}
+                <Link
+                  href="/reports"
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-white/80 hover:bg-[#242b44] rounded-md transition-colors",
+                    isActive("/reports") && "bg-[#2e3652] text-[#3b82f6]"
+                  )}
+                >
+                  <FileText className="h-5 w-5" />
+                  <span>Relatórios</span>
+                </Link>
+                
+                <Link
+                  href="/profile"
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-white/80 hover:bg-[#242b44] rounded-md transition-colors",
+                    isActive("/profile") && "bg-[#2e3652] text-[#3b82f6]"
+                  )}
+                >
+                  <User className="h-5 w-5" />
+                  <span>Perfil</span>
+                </Link>
+                
+                <Link
+                  href="/settings"
+                  className={cn(
+                    "flex items-center gap-3 px-4 py-2.5 text-sm font-medium text-white/80 hover:bg-[#242b44] rounded-md transition-colors",
+                    isActive("/settings") && "bg-[#2e3652] text-[#3b82f6]"
+                  )}
+                >
+                  <Settings className="h-5 w-5" />
+                  <span>Configurações</span>
+                </Link>
               </nav>
             </div>
           </div>
@@ -114,9 +146,9 @@ export function Sidebar({ isMobileSidebarOpen, closeMobileSidebar }: SidebarProp
           <div className="px-4 py-4 border-t border-white/10">
             <button
               onClick={handleLogout}
-              className="sidebar-link group hover:text-red-400 hover:bg-red-400/10"
+              className="flex items-center w-full gap-3 px-4 py-2.5 text-sm font-medium text-white/80 hover:bg-red-400/10 hover:text-red-400 rounded-md transition-colors"
             >
-              <LogOut size={18} className="group-hover:text-red-400" />
+              <LogOut className="h-5 w-5" />
               <span>Sair</span>
             </button>
           </div>

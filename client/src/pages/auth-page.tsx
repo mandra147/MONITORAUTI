@@ -34,7 +34,8 @@ export default function AuthPage() {
   const [activeTab, setActiveTab] = useState<string>('login');
   const [location, navigate] = useLocation();
   const { toast } = useToast();
-  const { user, isLoading, loginMutation, registerMutation } = useContext(AuthContext);
+  const { user, isLoading, login, logout } = useContext(AuthContext);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   
   // Se já estiver autenticado, redireciona para o dashboard
   useEffect(() => {
@@ -66,27 +67,46 @@ export default function AuthPage() {
 
   // Submissão do formulário de login
   const onLoginSubmit = async (data: LoginFormValues) => {
+    setIsSubmitting(true);
     try {
-      await loginMutation.mutateAsync(data);
+      await login(data.username, data.password);
       toast({
         title: 'Login realizado com sucesso',
         description: 'Bem-vindo de volta ao sistema MONITORA UTI',
       });
     } catch (error) {
-      // Erro é tratado pelo hook loginMutation
+      console.error('Login error:', error);
+      toast({
+        title: 'Erro ao fazer login',
+        description: 'Usuário ou senha incorretos',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   // Submissão do formulário de registro
   const onRegisterSubmit = async (data: RegisterFormValues) => {
+    setIsSubmitting(true);
     try {
-      await registerMutation.mutateAsync(data);
+      // Implemente o registro aqui quando estiver disponível
       toast({
-        title: 'Conta criada com sucesso',
-        description: 'Bem-vindo ao sistema MONITORA UTI',
+        title: 'Funcionalidade não implementada',
+        description: 'O registro de novos usuários ainda não está disponível',
+        variant: 'destructive',
       });
+      // Em uma implementação real, você adicionaria:
+      // await register(data);
     } catch (error) {
-      // Erro é tratado pelo hook registerMutation
+      console.error('Register error:', error);
+      toast({
+        title: 'Erro ao registrar',
+        description: 'Não foi possível criar sua conta',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
   
@@ -99,10 +119,10 @@ export default function AuthPage() {
       className="w-full"
     >
       <TabsList className="grid w-full grid-cols-2 mb-6">
-        <TabsTrigger value="login" disabled={loginMutation.isPending} className="text-sm">
+        <TabsTrigger value="login" disabled={isSubmitting} className="text-sm">
           Login
         </TabsTrigger>
-        <TabsTrigger value="register" disabled={registerMutation.isPending} className="text-sm">
+        <TabsTrigger value="register" disabled={isSubmitting} className="text-sm">
           Registro
         </TabsTrigger>
       </TabsList>
@@ -150,9 +170,9 @@ export default function AuthPage() {
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={loginMutation.isPending}
+                  disabled={isSubmitting}
                 >
-                  {loginMutation.isPending ? (
+                  {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Autenticando...
@@ -278,9 +298,9 @@ export default function AuthPage() {
                 <Button 
                   type="submit" 
                   className="w-full" 
-                  disabled={registerMutation.isPending}
+                  disabled={isSubmitting}
                 >
-                  {registerMutation.isPending ? (
+                  {isSubmitting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Criando conta...
