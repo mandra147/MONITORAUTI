@@ -44,7 +44,15 @@ export function LoginForm() {
       navigate('/dashboard');
     } catch (error) {
       console.error('Login error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Falha na autenticação. Por favor, tente novamente.';
+      console.error('Login error details:', {
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+        message: error.message
+      });
+      const errorMessage = error instanceof Error 
+        ? error.message 
+        : (error.response?.data?.message || 'Falha na autenticação. Por favor, tente novamente.');
       toast({
         title: 'Falha na Autenticação',
         description: errorMessage,
