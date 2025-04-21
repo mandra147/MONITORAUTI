@@ -131,4 +131,21 @@
   .hover-menu {
     @apply transition-all duration-150 hover:bg-[rgba(255,255,255,0.05)] hover:text-white;
   }
+  
+  /* Classes para responsividade */
+  .responsive-container {
+    @apply px-2 sm:px-4 md:px-6 py-2 sm:py-4 md:py-6;
+  }
+  
+  .responsive-grid {
+    @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 md:gap-6;
+  }
+  
+  .responsive-text {
+    @apply text-sm sm:text-base;
+  }
+  
+  .responsive-heading {
+    @apply text-xl sm:text-2xl md:text-3xl font-bold;
+  }
 }

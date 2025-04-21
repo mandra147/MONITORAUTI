@@ -66,7 +66,7 @@ function BedCard({ bed }: { bed: any }) {
             Ala {bed.wing} • {bed.floor}º andar
           </span>
         </div>
-        
+
         <div className="pt-1">
           <h4 className="font-medium">{bed.patient.name}</h4>
           <div className="flex items-center text-xs text-muted-foreground mt-1 space-x-1">
@@ -75,13 +75,13 @@ function BedCard({ bed }: { bed: any }) {
             <span>{bed.patient.mainDiagnosis}</span>
           </div>
         </div>
-        
+
         <div className="flex justify-between items-center mt-4 text-xs">
           <div className="flex flex-col">
             <span className="text-muted-foreground">Tempo de internação</span>
             <span className="font-medium">{bed.patient.daysHospitalized || 0} dias</span>
           </div>
-          
+
           <div className="flex flex-col text-right">
             <span className="text-muted-foreground">Gravidade</span>
             <span className="font-medium">
@@ -100,28 +100,28 @@ export function Dashboard() {
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const { theme, setTheme } = useTheme();
-  
+
   const toggleTheme = () => {
     setTheme(theme === 'dark' ? 'light' : 'dark');
   };
-  
+
   const { data: beds = [], isLoading, error } = useQuery({
     queryKey: ['/api/dashboard'],
     refetchInterval: 30000, // Refetch every 30 seconds
   });
-  
+
   // Ensure beds is always an array, even if API returns an object or undefined
   const bedsArray = Array.isArray(beds) ? beds : [];
 
   const filteredBeds = useMemo(() => {
     if (!bedsArray || bedsArray.length === 0) return [];
-    
+
     return bedsArray.filter((bed: any) => {
       // Filter by status (ignore if "all" is selected)
       if (statusFilter && statusFilter !== 'all' && bed.status !== statusFilter) {
         return false;
       }
-      
+
       // Filter by search term (bed number or patient name)
       if (searchTerm) {
         const searchTermLower = searchTerm.toLowerCase();
@@ -129,17 +129,17 @@ export function Dashboard() {
         const patientNameMatch = bed.patient && bed.patient.name 
           ? bed.patient.name.toLowerCase().includes(searchTermLower)
           : false;
-        
+
         return bedNumberMatch || patientNameMatch;
       }
-      
+
       return true;
     });
   }, [bedsArray, searchTerm, statusFilter]);
 
   const statusCounts = useMemo(() => {
     if (!bedsArray || bedsArray.length === 0) return { critical: 0, attention: 0, stable: 0, available: 0 };
-    
+
     return bedsArray.reduce(
       (acc: Record<BedStatus, number>, bed: any) => {
         const status = bed.status as BedStatus;
@@ -155,7 +155,7 @@ export function Dashboard() {
   const handleSearch = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSearchTerm(e.target.value);
   };
-  
+
   const handleStatusFilter = (value: string) => {
     setStatusFilter(value);
   };
@@ -203,7 +203,7 @@ export function Dashboard() {
             {bedsArray.length} leitos monitorados em tempo real
           </p>
         </div>
-        
+
         <div className="flex items-center gap-2">
           <div className="text-sm text-muted-foreground">
             {updateTime}

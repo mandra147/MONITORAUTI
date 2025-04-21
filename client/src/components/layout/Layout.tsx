@@ -24,10 +24,10 @@ export function Layout({ children }: LayoutProps) {
         closeMobileSidebar={closeMobileSidebar}
       />
       
-      <div className="flex-1 flex flex-col min-h-screen md:pl-72">
+      <div className="flex-1 flex flex-col min-h-screen w-full md:pl-72">
         <Header toggleSidebar={toggleSidebar} />
         
-        <main className="flex-1 overflow-y-auto bg-background">
+        <main className="flex-1 overflow-y-auto bg-background w-full">
           {children}
         </main>
       </div>

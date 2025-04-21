@@ -71,7 +71,7 @@ export function BedCard({ bed }: BedCardProps) {
       onClick={handleClick}
     >
       {bed.status === 'available' ? (
-        <div className="p-4 flex flex-col items-center justify-center" style={{ height: '234px' }}>
+        <div className="p-3 sm:p-4 flex flex-col items-center justify-center" style={{ minHeight: '200px', height: 'auto' }}>
           <div className="text-center">
             <svg 
               className={cn("h-12 w-12 mx-auto", "text-available")}
@@ -97,7 +97,7 @@ export function BedCard({ bed }: BedCardProps) {
           </div>
         </div>
       ) : (
-        <div className="p-4">
+        <div className="p-3 sm:p-4">
           <div className="flex justify-between items-start">
             <div>
               <div className="flex items-center">
