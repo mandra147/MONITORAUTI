@@ -3,7 +3,7 @@ import { useCallback } from 'react';
 import { useLocation } from 'wouter';
 import { Bed } from '@/types';
 import { cn } from '@/lib/utils';
-import { Activity, Heart, Stethoscope, Lung, Brain, Plus, User, Calendar } from 'lucide-react';
+import { Activity, Heart, Stethoscope, Lungs, Brain, Plus, User, Calendar } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 interface BedCardProps {
