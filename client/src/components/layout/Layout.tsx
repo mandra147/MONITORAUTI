@@ -18,16 +18,18 @@ export function Layout({ children }: LayoutProps) {
   };
 
   return (
-    <div className="flex min-h-screen bg-background">
+    <div className="main-container">
+      {/* Sidebar component */}
       <Sidebar
         isMobileSidebarOpen={isMobileSidebarOpen}
         closeMobileSidebar={closeMobileSidebar}
       />
       
-      <div className="flex-1 flex flex-col min-h-screen w-full md:pl-72">
+      {/* Main content area */}
+      <div className="content-area">
         <Header toggleSidebar={toggleSidebar} />
         
-        <main className="flex-1 overflow-y-auto bg-background w-full">
+        <main>
           {children}
         </main>
       </div>
