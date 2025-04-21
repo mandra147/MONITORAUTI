@@ -112,7 +112,6 @@ export function Dashboard() {
     const mockBeds = [];
     
     for (let i = 1; i <= 10; i++) {
-      // Garantir que os números dos leitos são de 501 a 510
       const bedNumber = i < 10 ? `50${i}` : '510';
       const status = statuses[Math.floor(Math.random() * 4)]; // Status aleatório
       const isOccupied = status !== 'available';
@@ -121,8 +120,8 @@ export function Dashboard() {
         id: i.toString(),
         bedNumber,
         status,
-        wing: i <= 5 ? 'A' : 'B',
-        floor: 5,
+        wing: 'Norte',
+        floor: 1,
         patient: isOccupied ? {
           id: `patient-${i}`,
           name: `Paciente ${i}`,
@@ -314,40 +313,22 @@ export function Dashboard() {
 
       {isLoading ? (
         <div className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {Array(5).fill(0).map((_, i) => (
-              <div key={i} className="bg-card/50 rounded-md shadow-sm border border-border/50 h-[220px] animate-pulse">
-                <div className="p-4 space-y-3">
-                  <div className="h-4 bg-muted rounded w-3/4"></div>
-                  <div className="h-4 bg-muted rounded w-1/2"></div>
-                  <div className="h-4 bg-muted rounded w-5/6"></div>
-                  <div className="h-4 bg-muted rounded w-2/3"></div>
-                </div>
+          {/* Estado de carregamento - skeletons */}
+          {Array(10).fill(0).map((_, i) => (
+            <div key={i} className="bg-gray-800 rounded-lg border-t-4 border-gray-600 mb-4 h-[150px] animate-pulse">
+              <div className="p-4 space-y-3">
+                <div className="h-4 bg-gray-700 rounded w-3/4"></div>
+                <div className="h-4 bg-gray-700 rounded w-1/2"></div>
+                <div className="h-4 bg-gray-700 rounded w-5/6"></div>
               </div>
-            ))}
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {Array(5).fill(0).map((_, i) => (
-              <div key={i+5} className="bg-card/50 rounded-md shadow-sm border border-border/50 h-[220px] animate-pulse">
-                <div className="p-4 space-y-3">
-                  <div className="h-4 bg-muted rounded w-3/4"></div>
-                  <div className="h-4 bg-muted rounded w-1/2"></div>
-                  <div className="h-4 bg-muted rounded w-5/6"></div>
-                  <div className="h-4 bg-muted rounded w-2/3"></div>
-                </div>
-              </div>
-            ))}
-          </div>
+            </div>
+          ))}
         </div>
       ) : (
-        <div className="space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {filteredBeds.slice(0, 5).map((bed: any) => (
-              <BedCard key={bed.id} bed={bed} />
-            ))}
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-            {filteredBeds.slice(5, 10).map((bed: any) => (
+        <div>
+          {/* Exibir leitos em formato de lista (1 coluna em mobile, 2 colunas em telas maiores) */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {filteredBeds.map((bed: any) => (
               <BedCard key={bed.id} bed={bed} />
             ))}
           </div>
